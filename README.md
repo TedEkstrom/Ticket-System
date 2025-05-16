@@ -6,9 +6,14 @@ The ticket system consists of two different applications; ReadTickets and Maketi
 
 ![image](https://github.com/user-attachments/assets/c4ff919a-456d-4ada-b60e-a07f5b91f743)
 
+In settings you can set where it should retrieve its tickets (of course in the same place they are sent from MakeTicket) but you can also choose users. Of course you have to choose where to retrieve your tickets for it to work correctly. In some cases you need to restart it.
+
+
+
 ![image](https://github.com/user-attachments/assets/d27cda0b-5f3c-40e1-8f44-031bbee6bc2c)
 
 The path.txt file is for MakeTicket and must be placed in the same folder. This is how you tell the application where to place the new tickets.
+
 
 
 More admin users
