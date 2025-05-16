@@ -4,6 +4,6 @@ The ticket system consists of two different applications; ReadTickets and Maketi
 
 ![image](https://github.com/user-attachments/assets/c4ff919a-456d-4ada-b60e-a07f5b91f743)
 
-![image](https://github.com/user-attachments/assets/bdf5b9f3-c142-4f38-ab15-e35289beb64d)
+![image](https://github.com/user-attachments/assets/d27cda0b-5f3c-40e1-8f44-031bbee6bc2c)
 
 I also provide a compiled version in exe format for those who are interested. It is created using the ps2exe tool by Markus Scholtes (https://github.com/MScholtes/PS2EXE).
