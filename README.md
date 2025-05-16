@@ -12,7 +12,7 @@ The ticket system consists of two different applications; ReadTickets and Maketi
 
 More admin users
 
-To create users for the Ticket System, you must manually (for now) create a json file with the format:
+To create users for the Ticket System, you must manually (for now) edit a json file with the format:
 
 {
 
@@ -20,7 +20,7 @@ To create users for the Ticket System, you must manually (for now) create a json
 
 }
 
-and save it with the file name owners.json and place the file in the root of your tickets, for example \\192.168.0.1\tickets\owners.json. The folders, however, are created automatically. There will probably be an update in the future.
+and save it with the file name owners.json and which is placed in the root of your tickets path, for example \\192.168.0.1\tickets\owners.json. There will probably be an update in the future.
 
 ![image](https://github.com/user-attachments/assets/54743df9-6d17-4a68-ad8a-10e82265ed5e)
 
