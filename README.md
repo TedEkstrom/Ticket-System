@@ -8,6 +8,8 @@ The ticket system consists of two different applications; ReadTickets and Maketi
 
 ![image](https://github.com/user-attachments/assets/d27cda0b-5f3c-40e1-8f44-031bbee6bc2c)
 
+
+
 More admin users
 
 To create users for the Ticket System, you must manually (for now) create a json file with the format:
