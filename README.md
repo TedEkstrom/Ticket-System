@@ -6,4 +6,17 @@ The ticket system consists of two different applications; ReadTickets and Maketi
 
 ![image](https://github.com/user-attachments/assets/d27cda0b-5f3c-40e1-8f44-031bbee6bc2c)
 
+To create users for the Ticket System, you must manually (for now) create a json file with the format:
+
+{
+"ticketOwners": "User1, User2,..."
+
+}
+
+and save it with the file name owners.json and place the file in the root of your tickets, for example \\192.168.0.1\tickes\owners.json. Mapparna skapa däremot automatiskt. There will probably be an update in the future.
+
+![image](https://github.com/user-attachments/assets/54743df9-6d17-4a68-ad8a-10e82265ed5e)
+
+
+
 I also provide a compiled version in exe format for those who are interested. It is created using the ps2exe tool by Markus Scholtes (https://github.com/MScholtes/PS2EXE).
