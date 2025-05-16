@@ -26,7 +26,7 @@ To create users for the Ticket System, you must manually (for now) edit a json f
 
 }
 
-and save i. There will probably be an update in the future.
+and save it. There will probably be an update in the future.
 
 ![image](https://github.com/user-attachments/assets/54743df9-6d17-4a68-ad8a-10e82265ed5e)
 
