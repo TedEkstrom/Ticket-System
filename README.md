@@ -8,6 +8,7 @@ The ticket system consists of two different applications; ReadTickets and Maketi
 
 ![image](https://github.com/user-attachments/assets/d27cda0b-5f3c-40e1-8f44-031bbee6bc2c)
 
+The path.txt file is for MakeTicket and must be placed in the same folder. This is how you tell the application where to place the new tickets.
 
 
 More admin users
