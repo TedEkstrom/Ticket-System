@@ -34,4 +34,6 @@ and save it with the file name owners.json and which is placed in the root of yo
 
 Compiled version
 
-I also provide a compiled version in exe format for those who are interested. It is created using the ps2exe tool by Markus Scholtes (https://github.com/MScholtes/PS2EXE).
+I also provide a compiled version in exe format for those who are interested. It is created using the ps2exe tool by Markus Scholtes (https://github.com/MScholtes/PS2EXE). 
+
+Since I don't use any certificates when building the applications, you will probably get a message that it is not secure. You run it at your own risk, of course, and if you are unsure and don't want to take the risk, you can build it yourself using the PowerShell files here.
