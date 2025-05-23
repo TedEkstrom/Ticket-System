@@ -18,7 +18,7 @@ The path.txt file is for MakeTicket and must be placed in the same folder. This 
 
 More admin users
 
-To create users for the Ticket System, you must manually (for now) edit a json file (for example \\192.168.0.1\tickets\owners.json), with the format:
+To create users for the Ticket System, you must manually (for now) edit a json file (for example \\\192.168.0.1\tickets\owners.json), with the format:
 
 {
 
