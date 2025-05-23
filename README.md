@@ -1,6 +1,6 @@
 Ticket System
 
-This is a simple ticket system where you can submit and read submitted tickets. It uses a share (for example \\192.168.0.1\tickets) to be able to distribute the tickets with other computers. Therefore, it is important that the system has access to this share and the users who submit.
+This is a simple ticket system where you can submit and read submitted tickets. It uses a share (for example \\\192.168.0.1\tickets) to be able to distribute the tickets with other computers. Therefore, it is important that the system has access to this share and the users who submit.
 
 The ticket system consists of two different applications; ReadTickets and Maketicket. Just as the names suggest, MakeTicket is used to submit tickets and ReadTickets is used to read and manage them.
 
