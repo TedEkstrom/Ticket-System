@@ -746,27 +746,42 @@ function searchForTickets () {
 searchForTickets
 
 function saveChanges () {
-    # Change the json-file with new priority
-    $fileToWrite = $global:loadedtickets[$global:LastSelectTicket.ticketName]
-    $global:LoadedTicket | ConvertTo-Json | Out-File -FilePath $fileToWrite
+    if ( $Tickets.SelectedItems.ticketName.Length -gt 0 ) { 
+
+        Write-Host $loadedtickets
+        Write-Host $global:LastSelectTicket.ticketName
+
+        Write-Host $loadedtickets[$global:LastSelectTicket.ticketName]
+
+        $fileToWrite = $global:loadedtickets[$global:LastSelectTicket.ticketName]
+        $global:LoadedTicket | ConvertTo-Json | Out-File -FilePath $fileToWrite
+    }
 }
 
 
-
-## Ska implementeras i OpenTicket fönstret 
 function solvdTicket () {
     
-    if ( $Tickets.SelectedItems.ticketName.Length -gt 0 ) {     
-        Move-Item -Path $loadedtickets[$global:LastSelectTicket.ticketName] -Destination $solvedTickets
+    if ( $Tickets.SelectedItems.ticketName.Length -gt 0 ) { 
+        
+        Write-Host $loadedtickets
+        Write-Host $global:LastSelectTicket.ticketName
+
+        Write-Host $loadedtickets[$global:LastSelectTicket.ticketName]
+        Move-Item -Path $loadedtickets[$global:LastSelectTicket.ticketName] -Destination "$deletedTickets$($global:LastSelectTicket.ticketName.Replace(' ',''))_$(Get-Date -Format 'yyyyMMdd_ss').json"
         searchForTickets
     }
 }
 
-## Kanske ska implementeras i OpenTicket fönstret 
 function NotSolvdTicket () {
     
-    if ( $Tickets.SelectedItems.ticketName.Length -gt 0 ) {        
-        Move-Item -Path $loadedtickets[$global:LastSelectTicket.ticketName] -Destination $NotSolvedTickets    
+    if ( $Tickets.SelectedItems.ticketName.Length -gt 0 ) {  
+    
+        
+        Write-Host $loadedtickets
+        Write-Host $global:LastSelectTicket.ticketName
+        Write-Host $loadedtickets[$global:LastSelectTicket.ticketName]
+          
+        Move-Item -Path $loadedtickets[$global:LastSelectTicket.ticketName] -Destination "$deletedTickets$($global:LastSelectTicket.ticketName.Replace(' ',''))_$(Get-Date -Format 'yyyyMMdd_ss').json"
         searchForTickets
     }
 }
@@ -812,8 +827,7 @@ function pause () {
 function deleteTicket () {
 
     if ( $Tickets.SelectedItems.ticketName.Length -gt 0  ) {      
-        #openTicket
-        Move-Item -Path $loadedtickets[$global:LastSelectTicket.ticketName] -Destination "$deletedTickets$($global:LastSelectTicket.ticketName.Replace(' ',''))_$(Get-Date -Format 'yyyyMMdd').json"
+        Move-Item -Path $loadedtickets[$global:LastSelectTicket.ticketName] -Destination "$deletedTickets$($global:LastSelectTicket.ticketName.Replace(' ',''))_$(Get-Date -Format 'yyyyMMdd_ss').json"
         searchForTickets
     }
 }
@@ -1074,9 +1088,9 @@ $inputXML = @"
         $global:loadedticket.Update += $updateT.Text + "`r`n-------------------------------- Solved ----------------------------`r`n"
         $global:loadedticket.Update += $updateT.Text + "`r`n--------------------------------------------------------------------`r`n"
         saveChanges
-        $Window.Hide()
         solvdTicket
         searchForTickets
+        $Window.Hide()
     })
 
     $closeB.Add_Click({$Window.Hide()})
@@ -1086,9 +1100,9 @@ $inputXML = @"
         $global:loadedticket.Update += $updateT.Text + "`r`n----------------------- Not able to be Solved ----------------------`r`n"
         $global:loadedticket.Update += $updateT.Text + "`r`n--------------------------------------------------------------------`r`n"
         saveChanges
-        $Window.Hide()
         NotSolvdTicket
         searchForTickets
+        $Window.Hide()
     })
 
     $tagTtemp = $tagT.Text
@@ -1597,9 +1611,12 @@ $inputXML = @"
 $Timer1 = New-Object System.Windows.Threading.DispatcherTimer
 $Timer1.Interval = [TimeSpan]::FromSeconds(2)
 
+
+
 $Timer1.add_Tick({
 
     if ( !$notsolvedR.IsChecked -or $solvedR.IsChecked ) {
+
         foreach ($item in $tickets.Items) {
             if ( ![string]::IsNullOrEmpty($item.Deadline) ) {
                 
@@ -1630,7 +1647,7 @@ $Timer1.add_Tick({
                     }
                 }
             }
-        }
+        } 
     }
 })
 
@@ -1639,7 +1656,25 @@ $Timer1.Start()
 $Timer2 = New-Object System.Windows.Threading.DispatcherTimer
 $Timer2.Interval = [TimeSpan]::FromSeconds(10)
 
-$Timer2.add_Tick({ searchForTickets })
+$Timer2.add_Tick({
+    
+    # Code from Copilot
+
+    $selectedItem = $tickets.SelectedItem
+    $selectedIndex = $tickets.SelectedIndex
+
+    searchForTickets
+
+    if ($selectedItem) {
+        $newSelection = $tickets.Items | Where-Object { $_.ticketName -eq $selectedItem.ticketName }
+
+        if ($newSelection) {
+            $tickets.SelectedItem = $newSelection
+        } elseif ($selectedIndex -ge 0 -and $selectedIndex -lt $tickets.Items.Count) {
+            $tickets.SelectedIndex = $selectedIndex
+        }
+    }
+ })
 
 $Timer2.Start()
 
@@ -1675,14 +1710,21 @@ $tickets.Add_SelectionChanged({
     param($sender, $e)
     $selectedItem = $sender.SelectedItem
     $global:LastSelectTicket = $selectedItem
-    if ( $tickets.Items.Count -eq $loadedtickets.Count ) {
+    if ( $tickets.Items.Count -eq $loadedtickets.Count -and !$selectedItem.ticketName -eq "" ) {
         $global:LoadedTicket = Get-Content -Path $loadedtickets[$selectedItem.ticketName] -ErrorAction SilentlyContinue | ConvertFrom-Json
-    }
+    } 
 })
 
 
 
 $tickets.Add_MouseDoubleClick({ openTicket })
-$MainWindow.Add_Closing({autosaveSettings})
+
+$MainWindow.Add_Closing({
+    $Timer1 = $null
+    $Timer2 = $null
+    autosaveSettings
+})
+
+$MainWindow.Add_MouseLeftButtonDown({ $tickets.UnselectAll() })
 
 [Void]$MainWindow.ShowDialog()
