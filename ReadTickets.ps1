@@ -181,7 +181,7 @@ $inputXML = @"
                     <CheckBox Name="solvedR" Content="Solved" Margin="5"/>
                     <CheckBox Name="notSolvedR" Content="Not solved" Margin="5"/>
                     <CheckBox Name="pausedR" Content="Paused" Margin="5"/>
-                    <CheckBox Name="withOutOwnerR" Content="Show assigned tickets (all tickets)" Margin="5"/>
+                    <CheckBox Name="withOutOwnerR" Content="Show all tickets" Margin="5"/>
                 </WrapPanel>
             </StackPanel>
 
@@ -386,7 +386,7 @@ function searchForTickets () {
 
             $isTicketOwner = (Get-Content -Path $_ | ConvertFrom-Json).ticketOwner
 
-              if ( ($ticketOwnerL.Text -eq $null) -or $WithOutOwnerR.IsChecked  -or ($isTicketOwner -eq $null) ) {
+              if ( $WithOutOwnerR.IsChecked  -or $isTicketOwner -eq "" ) { 
 
                      $temp = ($_.Split("\") | Select-Object -Last 1).ToString().Replace(".json", "")
                      $json = Get-Content -Path $_ | ConvertFrom-Json
@@ -421,7 +421,7 @@ function searchForTickets () {
                          $loadedtickets.Add($temp, $_)
                      }
                } else {
-                    if ( $Global:ticketOwner -eq $isTicketOwner ) {
+                    if ( $Global:ticketOwner -eq $isTicketOwner ) { 
                         
                         $temp = ($_.Split("\") | Select-Object -Last 1).ToString().Replace(".json", "")
             
@@ -468,7 +468,7 @@ function searchForTickets () {
                 
             $isTicketOwner = (Get-Content -Path $_ | ConvertFrom-Json).ticketOwner
 
-              if ( ($ticketOwnerL.Text -eq $null) -or $WithOutOwnerR.IsChecked  -or ($isTicketOwner -eq $null) ) {
+              if ( $WithOutOwnerR.IsChecked  -or $isTicketOwner -eq "" ) { 
 
                      $temp = ($_.Split("\") | Select-Object -Last 1).ToString().Replace(".json", "")
                      $json = Get-Content -Path $_ | ConvertFrom-Json
@@ -550,7 +550,7 @@ function searchForTickets () {
              
             $isTicketOwner = (Get-Content -Path $_ | ConvertFrom-Json).ticketOwner
 
-              if ( ($ticketOwnerL.Text -eq $null) -or $WithOutOwnerR.IsChecked  -or ($isTicketOwner -eq $null) ) {
+              if ( $WithOutOwnerR.IsChecked  -or $isTicketOwner -eq "" ) { 
 
                      $temp = ($_.Split("\") | Select-Object -Last 1).ToString().Replace(".json", "")
                      $json = Get-Content -Path $_ | ConvertFrom-Json
@@ -830,6 +830,61 @@ function deleteTicket () {
         Move-Item -Path $loadedtickets[$global:LastSelectTicket.ticketName] -Destination "$deletedTickets$($global:LastSelectTicket.ticketName.Replace(' ',''))_$(Get-Date -Format 'yyyyMMdd_ss').json"
         searchForTickets
     }
+}
+
+function assignTicketOwner () {
+
+    if ( $Tickets.SelectedItems.ticketName.Length -gt 0  ) {
+
+        $fileToWrite = $global:loadedtickets[$global:LastSelectTicket.ticketName]
+
+        $item = New-Object PSObject
+        $item | Add-Member -type NoteProperty -Name 'Title' -Value $global:LoadedTicket.Title
+        $item | Add-Member -type NoteProperty -Name 'Computer' -Value $global:LoadedTicket.Computer
+        $item | Add-Member -type NoteProperty -Name 'Tag' -Value $global:LoadedTicket.Tag
+        $item | Add-Member -type NoteProperty -Name 'Date' -Value $global:LoadedTicket.Date
+        $item | Add-Member -type NoteProperty -Name 'Error' -Value $global:LoadedTicket.Error
+        $item | Add-Member -type NoteProperty -Name 'Name' -Value $global:LoadedTicket.Name
+        $item | Add-Member -type NoteProperty -Name 'Update' -Value $global:LoadedTicket.Update
+        $item | Add-Member -type NoteProperty -Name 'Username' -Value $global:LoadedTicket.Username
+        $item | Add-Member -type NoteProperty -Name 'Prio' -Value $global:LoadedTicket.Prio
+        $item | Add-Member -type NoteProperty -Name 'ticketOwner' -Value $Global:ticketOwner
+        $item | Add-Member -type NoteProperty -Name 'Status' -Value $global:LoadedTicket.Status
+        $global:loadedticket =  $item
+
+        $SelectedItem = $Tickets.SelectedItems.Text
+
+        saveChanges
+        searchForTickets
+    } 
+}
+
+
+function resetTicketOwner () {
+
+     if ( $Tickets.SelectedItems.ticketName.Length -gt 0  ) {
+
+        $fileToWrite = $global:loadedtickets[$global:LastSelectTicket.ticketName]
+
+        $item = New-Object PSObject
+        $item | Add-Member -type NoteProperty -Name 'Title' -Value $global:LoadedTicket.Title
+        $item | Add-Member -type NoteProperty -Name 'Computer' -Value $global:LoadedTicket.Computer
+        $item | Add-Member -type NoteProperty -Name 'Tag' -Value $global:LoadedTicket.Tag
+        $item | Add-Member -type NoteProperty -Name 'Date' -Value $global:LoadedTicket.Date
+        $item | Add-Member -type NoteProperty -Name 'Error' -Value $global:LoadedTicket.Error
+        $item | Add-Member -type NoteProperty -Name 'Name' -Value $global:LoadedTicket.Name
+        $item | Add-Member -type NoteProperty -Name 'Update' -Value $global:LoadedTicket.Update
+        $item | Add-Member -type NoteProperty -Name 'Username' -Value $global:LoadedTicket.Username
+        $item | Add-Member -type NoteProperty -Name 'Prio' -Value $global:LoadedTicket.Prio
+        $item | Add-Member -type NoteProperty -Name 'ticketOwner' -Value ""
+        $item | Add-Member -type NoteProperty -Name 'Status' -Value $global:LoadedTicket.Status
+        $global:loadedticket =  $item
+
+        $SelectedItem = $Tickets.SelectedItems.Text
+
+        saveChanges
+        searchForTickets
+    } 
 }
 
 
@@ -1692,8 +1747,8 @@ $withOutOwnerR.Add_Click({ searchForTickets })
 
 $newTicketB.Add_Click({ newTicket })
 $renameTicketB.Add_Click({ renameTicket })
-$assignticketB.Add_Click({ })
-$resetAssignTicketB.Add_Click({ })
+$assignticketB.Add_Click({ assignTicketOwner })
+$resetAssignTicketB.Add_Click({ resetTicketOwner })
 $choosePrio1B.Add_Click({ prio1 })
 $ChoosePrio2B.Add_Click({ prio2 })
 $ChoosePrio3B.Add_Click({ prio3 })
