@@ -31,14 +31,21 @@ $paus = "$Global:Path\pause\"
 ## Create profile
 if ( !$(Test-Path -Path "$Global:Settings\Userprofile.json" -ErrorAction SilentlyContinue) ) {
 
-        $Global:Path = "$Global:Settings\tickets"
+    $Global:Path = "$Global:Settings\tickets"
 
-        New-Item -Path "$Global:Settings\Userprofile.json" -ItemType File -Force -ErrorAction SilentlyContinue
+    New-Item -Path "$Global:Settings\Userprofile.json" -ItemType File -Force -ErrorAction SilentlyContinue
+    $item = New-Object PSObject
+    $item | Add-Member -type NoteProperty -Name 'TicketPath' -Value $Global:Path
+    $item | Add-Member -type NoteProperty -Name 'NewR' -Value $true
+    $item | Add-Member -type NoteProperty -Name 'Prio1R' -Value $true
+    $item | Add-Member -type NoteProperty -Name 'Prio2R' -Value $true
+    $item | Add-Member -type NoteProperty -Name 'Prio3R' -Value $true
+    $item | Add-Member -type NoteProperty -Name 'SolvedR' -Value $false
+    $item | Add-Member -type NoteProperty -Name 'NotSolvedR' -Value $false
+    $item | Add-Member -type NoteProperty -Name 'WithOutOwner' -Value $true
+    $item | Add-Member -type NoteProperty -Name 'user' -Value $null
         
-        $item = New-Object PSObject
-        $item | Add-Member -type NoteProperty -Name 'TicketPath' -Value $Global:Path
-        
-        $item | ConvertTo-Json | Out-File -FilePath "$Global:Settings\Userprofile.json" -Force
+    $item | ConvertTo-Json | Out-File -FilePath "$Global:Settings\Userprofile.json"
 }
 
 ## Loading profile
@@ -55,14 +62,14 @@ $pause = "$Global:Path\pause\"
 
 if ( !($Global:Path -eq $null) -and !(Test-Path -Path "$Global:Path\new" -ErrorAction SilentlyContinue ) ) {
     
-    New-Item -Path $newTickets -ItemType Directory -ErrorAction SilentlyContinue
-    New-Item -Path $solvedTickets -ItemType Directory -ErrorAction SilentlyContinue
-    New-Item -Path $NotsolvedTickets -ItemType Directory -ErrorAction SilentlyContinue
-    New-Item -Path $deletedTickets -ItemType Directory -ErrorAction SilentlyContinue
-    New-Item -Path $prio1 -ItemType Directory -ErrorAction SilentlyContinue
-    New-Item -Path $prio2 -ItemType Directory -ErrorAction SilentlyContinue
-    New-Item -Path $prio3 -ItemType Directory -ErrorAction SilentlyContinue
-    New-Item -Path $pause -ItemType Directory -ErrorAction SilentlyContinue
+    [void](New-Item -Path $newTickets -ItemType Directory -ErrorAction SilentlyContinue)
+    [void](New-Item -Path $solvedTickets -ItemType Directory -ErrorAction SilentlyContinue)
+    [void](New-Item -Path $NotsolvedTickets -ItemType Directory -ErrorAction SilentlyContinue)
+    [void](New-Item -Path $deletedTickets -ItemType Directory -ErrorAction SilentlyContinue)
+    [void](New-Item -Path $prio1 -ItemType Directory -ErrorAction SilentlyContinue)
+    [void](New-Item -Path $prio2 -ItemType Directory -ErrorAction SilentlyContinue)
+    [void](New-Item -Path $prio3 -ItemType Directory -ErrorAction SilentlyContinue)
+    [void](New-Item -Path $pause -ItemType Directory -ErrorAction SilentlyContinue)
 }
  
 ####################################################
@@ -197,14 +204,14 @@ $inputXML = @"
                         <GridViewColumn Header="Priority" Width="70">
                             <GridViewColumn.CellTemplate>
                                 <DataTemplate>
-                                    <TextBlock Text="{Binding Priority}" TextAlignment="Center"/>
+                                    <TextBlock Text="{Binding Priority}" TextAlignment="Center" />
                                 </DataTemplate>
                             </GridViewColumn.CellTemplate>
                         </GridViewColumn>
                         <GridViewColumn Header="Assigned to" Width="100">
                             <GridViewColumn.CellTemplate>
                                 <DataTemplate>
-                                    <TextBlock Text="{Binding AssignedTo}" TextAlignment="Center"/>
+                                    <TextBlock Text="{Binding AssignedTo}" TextAlignment="Center" />
                                 </DataTemplate>
                             </GridViewColumn.CellTemplate>
                         </GridViewColumn>
@@ -219,28 +226,28 @@ $inputXML = @"
                         <GridViewColumn Header="Status" Width="150">
                             <GridViewColumn.CellTemplate>
                                 <DataTemplate>
-                                    <TextBlock Text="{Binding Status}" TextAlignment="Center"/>
+                                    <TextBlock Text="{Binding Status}" TextAlignment="Center" />
                                 </DataTemplate>
                             </GridViewColumn.CellTemplate>
                         </GridViewColumn>
                         <GridViewColumn Header="Deadline" Width="150">
                             <GridViewColumn.CellTemplate>
                                 <DataTemplate>
-                                    <TextBlock Text="{Binding Deadline}" TextAlignment="Center"/>
+                                    <TextBlock Text="{Binding Deadline}" TextAlignment="Center" />
                                 </DataTemplate>
                             </GridViewColumn.CellTemplate>
                         </GridViewColumn>
                         <GridViewColumn Header="Reported by" Width="100">
                             <GridViewColumn.CellTemplate>
                                 <DataTemplate>
-                                    <TextBlock Text="{Binding ReportedBy}" TextAlignment="Center"/>
+                                    <TextBlock Text="{Binding ReportedBy}" TextAlignment="Center" />
                                 </DataTemplate>
                             </GridViewColumn.CellTemplate>
                         </GridViewColumn>
                         <GridViewColumn Header="Reported" Width="80">
                             <GridViewColumn.CellTemplate>
                                 <DataTemplate>
-                                    <TextBlock Text="{Binding Date}" TextAlignment="Center"/>
+                                    <TextBlock Text="{Binding Date}" TextAlignment="Center" />
                                 </DataTemplate>
                             </GridViewColumn.CellTemplate>
                         </GridViewColumn>
@@ -293,19 +300,10 @@ catch {
 
 ####################################################
 ## Load settings
-
-$NewR.IsChecked = $false
-$Prio1R.IsChecked = $false
-$Prio2R.IsChecked = $false
-$Prio3R.IsChecked = $false
-$SolvedR.IsChecked = $false
-$NotSolvedR.IsChecked = $false
-$Global:ticketOwner = $false
-
 function loadAutosaveSettings () {
 
     $AutoSave = Get-Content -Path "$Global:Settings\userprofile.json" | ConvertFrom-Json
-
+    
     $NewR.IsChecked = $AutoSave.NewR
     $Prio1R.IsChecked = $AutoSave.Prio1R
     $Prio2R.IsChecked = $AutoSave.Prio2R
@@ -314,7 +312,6 @@ function loadAutosaveSettings () {
     $NotSolvedR.IsChecked = $AutoSave.NotSolvedR
     $WithOutOwnerR.IsChecked = $AutoSave.WithOutOwner
     $Global:ticketOwner = $AutoSave.user
-    
 } 
 loadAutosaveSettings
 
@@ -748,11 +745,6 @@ searchForTickets
 function saveChanges () {
     if ( $Tickets.SelectedItems.ticketName.Length -gt 0 ) { 
 
-        Write-Host $loadedtickets
-        Write-Host $global:LastSelectTicket.ticketName
-
-        Write-Host $loadedtickets[$global:LastSelectTicket.ticketName]
-
         $fileToWrite = $global:loadedtickets[$global:LastSelectTicket.ticketName]
         $global:LoadedTicket | ConvertTo-Json | Out-File -FilePath $fileToWrite
     }
@@ -763,10 +755,6 @@ function solvdTicket () {
     
     if ( $Tickets.SelectedItems.ticketName.Length -gt 0 ) { 
         
-        Write-Host $loadedtickets
-        Write-Host $global:LastSelectTicket.ticketName
-
-        Write-Host $loadedtickets[$global:LastSelectTicket.ticketName]
         Move-Item -Path $loadedtickets[$global:LastSelectTicket.ticketName] -Destination "$deletedTickets$($global:LastSelectTicket.ticketName.Replace(' ',''))_$(Get-Date -Format 'yyyyMMdd_ss').json"
         searchForTickets
     }
@@ -777,10 +765,6 @@ function NotSolvdTicket () {
     if ( $Tickets.SelectedItems.ticketName.Length -gt 0 ) {  
     
         
-        Write-Host $loadedtickets
-        Write-Host $global:LastSelectTicket.ticketName
-        Write-Host $loadedtickets[$global:LastSelectTicket.ticketName]
-          
         Move-Item -Path $loadedtickets[$global:LastSelectTicket.ticketName] -Destination "$deletedTickets$($global:LastSelectTicket.ticketName.Replace(' ',''))_$(Get-Date -Format 'yyyyMMdd_ss').json"
         searchForTickets
     }
@@ -1110,7 +1094,7 @@ $inputXML = @"
         } else {
             $editB.Content = "Edit"
             $editB.Dispatcher.Invoke([System.Windows.Threading.DispatcherPriority]::Render, [action]{})
-            $allUpdatesT.Foreground = "#FF757272"
+            $allUpdatesT.Foreground = "Black"
             $allUpdatesT.FontWeight = [System.Windows.FontWeights]::Normal
 
             $allPriviusUpdatesL.Content = "[UPDATED] All privius updates"
