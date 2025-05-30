@@ -997,14 +997,14 @@ $inputXML = @"
                 <Label Content="Description"/>
                 <TextBox Name="descriptionT" Text="Missing a description.."
                          FontSize="14" Foreground="Black" Width="705"
-                         TextWrapping="Wrap" AcceptsReturn="True" Height="68" VerticalScrollBarVisibility="Auto"
+                         TextWrapping="Wrap" AcceptsReturn="True" Height="100" VerticalScrollBarVisibility="Auto"
                          IsReadOnly="True" Background="Transparent"/>
 
                 <Label Name="allPriviusUpdatesL" Content="All privius updates"/>
 
                 <!-- TextBox för användarinmatning -->
 
-                <TextBox Name="allUpdatesT" FontSize="15" Height="350" Margin="10,0,10,0" 
+                <TextBox Name="allUpdatesT" FontSize="15" Height="300" Margin="10,0,10,0" 
                      Text="Missing update..." Foreground="Black" 
                      AcceptsReturn="True"  TextWrapping="Wrap"
                      IsReadOnly="True" VerticalScrollBarVisibility="Auto"/>
@@ -1181,7 +1181,7 @@ $inputXML = @"
             $item | Add-Member -type NoteProperty -Name 'Update' -Value $temp
             $item | Add-Member -type NoteProperty -Name 'Username' -Value $global:LoadedTicket.Username
             $item | Add-Member -type NoteProperty -Name 'Prio' -Value $global:LoadedTicket.Prio
-            $item | Add-Member -type NoteProperty -Name 'Status' -Value $statusCB.SelectionBoxItem
+            $item | Add-Member -type NoteProperty -Name 'Status' -Value $global:LoadedTicket.Status
             $item | Add-Member -type NoteProperty -Name 'deadLine' -Value $global:loadedtickets.deadLine
             $global:loadedticket =  $item
 
