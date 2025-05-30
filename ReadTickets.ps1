@@ -1159,6 +1159,7 @@ $inputXML = @"
 
         } else {
             $editB.Content = "Edit"
+            $allUpdatesT.IsReadOnly = $true
             $editB.Dispatcher.Invoke([System.Windows.Threading.DispatcherPriority]::Render, [action]{})
             $allUpdatesT.Foreground = "Black"
             $allUpdatesT.FontWeight = [System.Windows.FontWeights]::Normal
