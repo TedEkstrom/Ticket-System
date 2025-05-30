@@ -871,6 +871,79 @@ function resetTicketOwner () {
     } 
 }
 
+$Global:comment = ""
+
+function addComment () {
+
+$inputXML = @"
+<Window x:Class="TicketSystem.Comment"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:OpenTicket"
+        mc:Ignorable="d"
+        Title="Add a comment" Height="550" Width="800">
+    <Grid>
+        <Border Background="White" CornerRadius="10" Padding="10" Margin="20">
+            <StackPanel>
+                <TextBlock Text="Add a comment" FontSize="20" FontWeight="Bold" Foreground="#2C3E50" />
+
+                <TextBox Name="commentT" FontSize="15" Height="360" Margin="10,20,10,0" 
+                     Text="" Foreground="Black" 
+                     AcceptsReturn="True"  TextWrapping="Wrap"
+                     IsReadOnly="False" VerticalScrollBarVisibility="Auto"/>
+
+                <!-- Flyttade knapparna längst ner -->
+                <StackPanel Orientation="Horizontal" Margin="10">
+                    <Button Name="addCommentB" Content="Add comment" Width="220" Background="#FF4DA3DC" Foreground="White" Padding="5" />
+                    <Button Name="closeB"  Content="Close" Width="120" Background="Darkred" Foreground="White" Padding="5" Margin="5,0,0,0"/>
+                </StackPanel>
+            </StackPanel>
+        </Border>
+    </Grid>
+</Window>
+"@
+
+    #create window
+    $inputXML = $inputXML -replace 'mc:Ignorable="d"', '' -replace "x:N", 'N' -replace '^<Win.*', '<Window'
+    [xml]$XAML = $inputXML
+
+    #Read XAML
+    $reader = (New-Object System.Xml.XmlNodeReader $xaml)
+    try {
+        $Window = [Windows.Markup.XamlReader]::Load( $reader )
+        $commentT = $Window.FindName("commentT")
+        $addCommentB = $Window.FindName("addCommentB")
+        $closeB = $Window.FindName("closeB")
+
+    }
+    catch {
+        Write-Warning $_.Exception
+        throw
+    }
+
+    $commentT.Text = "Uppdatering, $(Get-Date -Format 'dd MMM yyyy')"
+
+    $addCommentB.Add_Click({
+
+        ## Måste komma på hur jag ska koppla två delar med varandra.
+        ## Det enklaste är nog bara att använda en ny global variabel för comments.
+        
+        if ( $allUpdatesT -eq "" ) {
+            $Global:comment = $allUpdatesT.Text + $commentT.Text + "`r--------------------------------------------------------------------" 
+        } else {
+            $Global:comment = $allUpdatesT.Text + $commentT.Text + "`r--------------------------------------------------------------------`r"
+        }
+    
+        $Window.hide()
+    })
+
+
+    $CloseB.Add_Click({ $Window.hide() })
+
+    [Void]$Window.ShowDialog();
+}
 
 function openTicket () {
 
@@ -888,9 +961,9 @@ $inputXML = @"
             <StackPanel>
                 <TextBlock Name="ticketNameT" Text="[ No name ]" FontSize="20" FontWeight="Bold" Foreground="#2C3E50" />
                 <TextBlock Name="tagT" Text="Tag: Missing..." FontSize="10" Padding="0,10,0,10" />
-                
+
                 <TextBlock Name="priorityT" Text="Priority: Missing..." FontSize="16" Foreground="#F39C12" Padding="0,0,0,0" />
-                
+
                 <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
                     <TextBlock Text="Status:" FontSize="16" Foreground="#27AE60" />
                     <ComboBox Name="statusCB"  Width="150" Margin="10,0,15,0">
@@ -911,14 +984,14 @@ $inputXML = @"
                      Foreground="Black" AcceptsReturn="True" TextWrapping="Wrap" Visibility="Hidden"
                      VerticalScrollBarVisibility="Auto"/>
                 </StackPanel>
-                
+
                 <StackPanel Orientation="Horizontal" Margin="0,15,0,10">
                     <TextBlock Name="DeadlineT" Text="Deadline: Not set" FontSize="16" Padding="0,0,0,0" />
                     <Button Name="deadlineB" Content="Add deadline" Width="100" FontSize="12" 
                             HorizontalAlignment="Left" Margin="10,0,0,0" Height="20" />
                     <Button Name="resetDeadlineB" Content="Reset" Width="60" FontSize="12" 
                             HorizontalAlignment="Left" Margin="5,0,0,0" Height="20" />
-                    
+
                 </StackPanel>
                 <!-- Gör beskrivningen till en TextBox för mer utrymme och rullning -->
                 <Label Content="Description"/>
@@ -930,7 +1003,8 @@ $inputXML = @"
                 <Label Name="allPriviusUpdatesL" Content="All privius updates"/>
 
                 <!-- TextBox för användarinmatning -->
-                <TextBox Name="allUpdatesT" FontSize="15" Height="180" Margin="10,0,10,0" 
+
+                <TextBox Name="allUpdatesT" FontSize="15" Height="350" Margin="10,0,10,0" 
                      Text="Missing update..." Foreground="Black" 
                      AcceptsReturn="True"  TextWrapping="Wrap"
                      IsReadOnly="True" VerticalScrollBarVisibility="Auto"/>
@@ -939,16 +1013,10 @@ $inputXML = @"
                         Height="17" Background="#FFC59200" Foreground="White" Padding="0" 
                         HorizontalAlignment="Left" Margin="15,5,0,10"  />
 
-                <Label Content="Update the ticket"/>
-
-                <TextBox Name="updateT" FontSize="15" Height="130" Margin="10,0,10,0" 
-                     Text="Missing update..." Foreground="Black"
-                     AcceptsReturn="True" TextWrapping="Wrap"
-                     VerticalScrollBarVisibility="Auto"/>
-
                 <!-- Flyttade knapparna längst ner -->
                 <StackPanel Orientation="Horizontal" Margin="10">
-                    <Button Name="updateB" Content="Update" Width="120" Background="#3498DB" Foreground="White" Padding="5" />
+                    <Button Name="addCommentB" Content="[ Add comment ]" Width="120" Background="#FF4DA3DC" Foreground="White" Padding="5" />
+                    <Button Name="updateB" Content="Update" Width="120" Background="#3498DB" Foreground="White" Padding="5" Margin="5,0,0,0" />
                     <Button Name="solvedB" Content="Solved" Width="120" Background="#2ECC71" Foreground="White" Padding="5" Margin="5,0,0,0"/>
                     <Button Name="closeB"  Content="Close" Width="120" Background="#95A5A6" Foreground="White" Padding="5" Margin="5,0,0,0"/>
                     <Button Name="notSolvableB"  Content="Not solvable" Width="120" Background="Darkred" Foreground="White" Padding="5" Margin="5,0,0,0"/>
@@ -967,11 +1035,12 @@ $inputXML = @"
     $reader = (New-Object System.Xml.XmlNodeReader $xaml)
     try {
         $Window = [Windows.Markup.XamlReader]::Load( $reader )
+        $addCommentB = $Window.FindName("addCommentB")
         $descriptionT = $Window.FindName("descriptionT")
         $ticketNameT = $Window.FindName("ticketNameT")
         $priorityT = $Window.FindName("priorityT")
         $statusCB = $Window.FindName("statusCB")
-        $updateT = $Window.FindName("updateT")
+        #$updateT = $Window.FindName("updateT")
         $allUpdatesT = $Window.FindName("allUpdatesT")
         $tagT = $Window.FindName("tagT")
         $editB = $Window.FindName("editB")
@@ -1032,8 +1101,7 @@ $inputXML = @"
     }
 
     $allUpdatesT.Text = $global:LoadedTicket.update
-    $updateT.Text = "Uppdatering, $(Get-Date -Format 'dd MMM yyyy')"
-
+    
     $allUpdatesT.Dispatcher.InvokeAsync({
         $allUpdatesT.ScrollToEnd()
     }, [System.Windows.Threading.DispatcherPriority]::Background)
@@ -1046,15 +1114,6 @@ $inputXML = @"
 
     $updateB.Add_Click({ 
 
-        $temp = $updateT.Text
-        if ( $updateT.Text -eq $temp ) {
-            
-            if ( $allUpdatesT.Text.length -gt 0 ) {
-                $temp = $allUpdatesT.Text + "`r" + $updateT.Text + "`r--------------------------------------------------------------------" 
-            } else {
-                $temp = $allUpdatesT.Text + $updateT.Text + "`r--------------------------------------------------------------------" 
-            }
-        }
         $fileToWrite = $global:loadedtickets[$global:LastSelectTicket.ticketName]
 
         $item = New-Object PSObject
@@ -1064,7 +1123,7 @@ $inputXML = @"
         $item | Add-Member -type NoteProperty -Name 'Date' -Value $global:LoadedTicket.Date
         $item | Add-Member -type NoteProperty -Name 'Error' -Value $global:LoadedTicket.Error
         $item | Add-Member -type NoteProperty -Name 'Name' -Value $global:LoadedTicket.Name
-        $item | Add-Member -type NoteProperty -Name 'Update' -Value $temp
+        $item | Add-Member -type NoteProperty -Name 'Update' -Value $allUpdatesT.Text
         $item | Add-Member -type NoteProperty -Name 'Username' -Value $global:LoadedTicket.Username
         $item | Add-Member -type NoteProperty -Name 'Prio' -Value $global:LoadedTicket.Prio
 
@@ -1079,6 +1138,13 @@ $inputXML = @"
         saveChanges
         $Window.Hide()
         searchForTickets
+    })
+
+    
+    $addCommentB.Add_Click({ 
+        
+        addComment
+        $allUpdatesT.Text = $Global:comment
     })
 
     $editB.Add_Click({
@@ -1243,6 +1309,7 @@ function calender () {
         $monthDisplay.Text = (Get-Culture).DateTimeFormat.MonthNames[$global:currentMonth - 1] + " " + $global:currentYear
     
         $daysInMonth = [DateTime]::DaysInMonth($global:currentYear, $global:currentMonth)
+
         for ($i = 1; $i -le $daysInMonth; $i++) {
             $txtBox = New-Object System.Windows.Controls.TextBox
             $txtBox.Text = "$i"
@@ -1277,7 +1344,9 @@ function calender () {
                 param($sender, $e)
 
                 $sender.Background = [System.Windows.Media.Brushes]::Gray
-                $selectedDateT.Text = "$($sender.Text) $($monthDisplay.Text)"
+                $selectedDateT.Text = "$($sender.Text) $([cultureinfo]::GetCultureInfo('en-US').DateTimeFormat.MonthNames[$global:currentMonth - 1]) $global:currentYear"
+                #$selectedDateT.Text = "$($sender.Text) $($monthDisplay.Text)" # < wrong lanhuage some time
+                
             })
 
             $dateGrid.Children.Add($txtBox)
@@ -1660,7 +1729,7 @@ $Timer1.add_Tick({
             if ( ![string]::IsNullOrEmpty($item.Deadline) ) {
                 
                 $deadline = Get-Date $item.Deadline -ErrorAction SilentlyContinue
-
+                #$deadline = [datetime]::ParseExact($item.Deadline, "d MMMM yyyy", [cultureinfo]::InvariantCulture) < If problem still exist with wrong format.
                 $limit = $($deadline - (Get-Date)).days
                 
                 if ( $limit -le 8 -and $limit -ge 4 ) {
