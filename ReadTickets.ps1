@@ -167,17 +167,18 @@ $inputXML = @"
 
             <!-- Användarval -->
             <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="10">
-                <TextBlock Text="User: ...." Name="ticketOwnerL" VerticalAlignment="Center" Margin="5"/>
-                <Button Content="Refresh Window" Name="refreshB" Margin="300,0,0,0" Padding="0"
+                <TextBlock Text="User: ...." Name="ticketOwnerL" Width="200" VerticalAlignment="Center" Margin="5"/>
+                <TextBox Text="" Name="searchTB" Width="200" VerticalAlignment="Center"  Margin="5" />
+                <Button Content="Search" Name="searchB" Margin="0,3,0,0" Padding="0"
                         Background="#FF0B1E2B" Foreground="White"
                         FontWeight="Bold" BorderBrush="Transparent"
-                        Width="180" Height="20"
+                        Width="100" Height="20"
                         HorizontalAlignment="Left"
                         VerticalAlignment="Top"
                         Cursor="Hand"/>
             </StackPanel>
-            
-            
+
+
             <!-- Ticket Filters -->
             <StackPanel DockPanel.Dock="Top" Background="{DynamicResource {x:Static SystemColors.ActiveCaptionBrushKey}}" Margin="10">
                 <WrapPanel Background="{DynamicResource {x:Static SystemColors.ActiveCaptionBrushKey}}">
@@ -291,7 +292,8 @@ try {
     $choosePrio3B = $MainWindow.FindName("choosePrio3B")
     $pauseTicketB = $MainWindow.FindName("pauseTicketB")
     $deleteTicketB = $MainWindow.FindName("deleteTicketB")
-    $refreshB = $MainWindow.FindName("refreshB")
+    $searchTB = $MainWindow.FindName("searchTB")
+    $searchB = $MainWindow.FindName("searchB")
 }
 catch {
     Write-Warning $_.Exception
@@ -751,11 +753,11 @@ function saveChanges () {
 }
 
 
-function solvdTicket () {
+function solvedTicket () {
     
     if ( $Tickets.SelectedItems.ticketName.Length -gt 0 ) { 
         
-        Move-Item -Path $loadedtickets[$global:LastSelectTicket.ticketName] -Destination "$deletedTickets$($global:LastSelectTicket.ticketName.Replace(' ',''))_$(Get-Date -Format 'yyyyMMdd_ss').json"
+        Move-Item -Path $loadedtickets[$global:LastSelectTicket.ticketName] -Destination "$solvedTickets$($global:LastSelectTicket.ticketName.Replace(' ',''))_$(Get-Date -Format 'yyyyMMdd_ss').json"
         searchForTickets
     }
 }
@@ -765,7 +767,7 @@ function NotSolvdTicket () {
     if ( $Tickets.SelectedItems.ticketName.Length -gt 0 ) {  
     
         
-        Move-Item -Path $loadedtickets[$global:LastSelectTicket.ticketName] -Destination "$deletedTickets$($global:LastSelectTicket.ticketName.Replace(' ',''))_$(Get-Date -Format 'yyyyMMdd_ss').json"
+        Move-Item -Path $loadedtickets[$global:LastSelectTicket.ticketName] -Destination "$NotsolvedTickets$($global:LastSelectTicket.ticketName.Replace(' ',''))_$(Get-Date -Format 'yyyyMMdd_ss').json"
         searchForTickets
     }
 }
@@ -1808,12 +1810,8 @@ $ChoosePrio2B.Add_Click({ prio2 })
 $ChoosePrio3B.Add_Click({ prio3 })
 $pauseTicketB.Add_Click({ pause })
 $deleteTicketB.Add_Click({ deleteTicket })
-$refreshB.Add_Click({ 
-    $MainWindow.Dispatcher.Invoke({
-        $MainWindow.UpdateLayout()
-    })
-    searchForTickets 
-})
+
+$searchB.Add_Click({ searchForTickets })
 
 $tickets.Add_SelectionChanged({
     param($sender, $e)
