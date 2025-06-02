@@ -1322,7 +1322,7 @@ function calender () {
 
             $currentDate = "$i $($monthDisplay.Text)"
 
-            if ( $currentDate -eq (Get-Date -Format "dd MMM yyyy") ) {
+            if ( ((Get-Date).ToString("dd MMMM yyyy", [System.Globalization.CultureInfo]::GetCultureInfo("en-US"))) -like "*$currentDate*" ) {
                 $txtBox.Background = [System.Windows.Media.Brushes]::Lightblue
             }
 
@@ -1338,7 +1338,7 @@ function calender () {
                 if ( !($sender.Background -eq "Gray") ) {
                    $sender.Background = [System.Windows.Media.Brushes]::Transparent
 
-                   if ( $currentDate -eq (Get-Date -Format "dd MMM yyyy") ) {
+                   if ( ((Get-Date).ToString("dd MMMM yyyy", [System.Globalization.CultureInfo]::GetCultureInfo("en-US"))) -like "*$currentDate*" ) {
                         $sender.Background = [System.Windows.Media.Brushes]::Lightblue
                    }
                 }
