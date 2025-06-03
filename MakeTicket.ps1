@@ -6,7 +6,7 @@ $inputXML = @"
 <Window x:Class="TicketSystem.NewTicket"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="New Ticket" Height="550" Width="700"
+        Title="New Ticket" Height="500" Width="700"
         Background="#F0F0F0">
     <Grid>
         <Border Background="White" CornerRadius="10" Padding="10" Margin="20">
@@ -82,6 +82,34 @@ if ( $issueT.Text -ne "Enter issue description..." -and $descriptionT.Text -ne "
     }
 })
 
-$closeB.Add_Click({$Window.Hide()})
+$closeB.Add_Click({$Window.Close()})
+
+
+$issueT.Add_PreviewMouseDown({ 
+
+    $issueT.Text = ""
+})
+
+$descriptionT.Add_PreviewMouseDown({ 
+
+    $descriptionT.Text = ""
+})
+
+$userT.Add_PreviewMouseDown({ 
+
+    $userT.Text = ""
+})
+$Window.Add_PreviewMouseDown({ 
+    
+    if ( $issueT.Text -eq "" ) {
+        $issueT.Text = "Enter issue description..."
+    }
+    if ( $descriptionT.Text -eq "" ) {
+        $descriptionT.Text = "Enter detailed description..."
+    }
+    if ( $userT.Text -eq "" ) {
+        $userT.Text = "Enter your name..."
+    }
+})
 
 [Void]$Window.ShowDialog()    

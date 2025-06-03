@@ -168,6 +168,13 @@ $inputXML = @"
             <!-- Användarval -->
             <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="10">
                 <TextBlock Text="User: ...." Name="ticketOwnerL" Width="200" VerticalAlignment="Center" Margin="5"/>
+                <Button Content="[ C ]" Name="cleareB" Margin="0,3,0,0" Padding="0"
+                        Background="#FF754C4C" Foreground="White"
+                        FontWeight="Bold" BorderBrush="Transparent"
+                        Width="40" Height="20"
+                        HorizontalAlignment="Left"
+                        VerticalAlignment="Top"
+                        Cursor="Hand"/>
                 <TextBox Text="" Name="searchTB" Width="200" VerticalAlignment="Center"  Margin="5" />
                 <Button Content="Search" Name="searchB" Margin="0,3,0,0" Padding="0"
                         Background="#FF0B1E2B" Foreground="White"
@@ -227,7 +234,8 @@ $inputXML = @"
                         <GridViewColumn Header="Status" Width="150">
                             <GridViewColumn.CellTemplate>
                                 <DataTemplate>
-                                    <TextBlock Text="{Binding Status}" TextAlignment="Center" />
+                                    <TextBlock Text="{Binding Status}" TextAlignment="Center" 
+                                    ToolTip="{Binding Status}" ToolTipService.InitialShowDelay="10" />
                                 </DataTemplate>
                             </GridViewColumn.CellTemplate>
                         </GridViewColumn>
@@ -294,6 +302,7 @@ try {
     $deleteTicketB = $MainWindow.FindName("deleteTicketB")
     $searchTB = $MainWindow.FindName("searchTB")
     $searchB = $MainWindow.FindName("searchB")
+    $cleareB = $MainWindow.FindName("cleareB")
 }
 catch {
     Write-Warning $_.Exception
@@ -1491,6 +1500,33 @@ $inputXML = @"
 
     $closeB.Add_Click({$Window.Hide()})
 
+    $issueT.Add_PreviewMouseDown({ 
+
+        $issueT.Text = ""
+    })
+
+    $descriptionT.Add_PreviewMouseDown({ 
+
+        $descriptionT.Text = ""
+    })
+
+    $userT.Add_PreviewMouseDown({ 
+
+        $userT.Text = ""
+    })
+    $Window.Add_PreviewMouseDown({ 
+    
+        if ( $issueT.Text -eq "" ) {
+            $issueT.Text = "Enter issue description..."
+        }
+        if ( $descriptionT.Text -eq "" ) {
+            $descriptionT.Text = "Enter detailed description..."
+        }
+        if ( $userT.Text -eq "" ) {
+            $userT.Text = "Enter your name..."
+        }
+    })
+
     [Void]$Window.ShowDialog()    
 }
 
@@ -1810,8 +1846,21 @@ $ChoosePrio2B.Add_Click({ prio2 })
 $ChoosePrio3B.Add_Click({ prio3 })
 $pauseTicketB.Add_Click({ pause })
 $deleteTicketB.Add_Click({ deleteTicket })
-
 $searchB.Add_Click({ searchForTickets })
+
+$searchTB.Add_KeyDown({  
+    if ( $_.Key -eq "Enter" ) {
+        
+        searchForTickets
+    }
+})
+
+$cleareB.Add_Click({ 
+    $searchTB.Text = ""
+    searchForTickets
+})
+
+
 
 $tickets.Add_SelectionChanged({
     param($sender, $e)
