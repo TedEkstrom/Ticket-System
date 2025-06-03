@@ -87,17 +87,23 @@ $closeB.Add_Click({$Window.Close()})
 
 $issueT.Add_PreviewMouseDown({ 
 
-    $issueT.Text = ""
+    if ( $issueT.Text -eq "Enter issue description..." ) {
+        $issueT.Text = ""
+    }
 })
 
 $descriptionT.Add_PreviewMouseDown({ 
 
-    $descriptionT.Text = ""
+    if ( $descriptionT.Text -eq "Enter detailed description..." ) {
+        $descriptionT.Text = ""
+    }
 })
 
 $userT.Add_PreviewMouseDown({ 
-
-    $userT.Text = ""
+    
+    if ( $userT.Text -eq "Enter your name..." ) {
+        $userT.Text = ""
+    }
 })
 $Window.Add_PreviewMouseDown({ 
     
