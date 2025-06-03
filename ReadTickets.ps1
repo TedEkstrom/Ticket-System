@@ -1316,7 +1316,7 @@ function calender () {
     $global:currentYear = (Get-Date).Year
 
     # Uppdatera kalender med placeholders
-    function Update-Calendar {
+    function updateCalendar {
         $dateGrid.Children.Clear()
         $monthDisplay.Text = (Get-Culture).DateTimeFormat.MonthNames[$global:currentMonth - 1] + " " + $global:currentYear
     
@@ -1330,7 +1330,7 @@ function calender () {
             $txtBox.IsReadOnly = $true
 
             $currentDate = "$i $($monthDisplay.Text)"
-
+            
             if ( ((Get-Date).ToString("dd MMMM yyyy", [System.Globalization.CultureInfo]::GetCultureInfo("en-US"))) -like "*$currentDate*" ) {
                 $txtBox.Background = [System.Windows.Media.Brushes]::Lightblue
             }
@@ -1347,7 +1347,7 @@ function calender () {
                 if ( !($sender.Background -eq "Gray") ) {
                    $sender.Background = [System.Windows.Media.Brushes]::Transparent
 
-                   if ( ((Get-Date).ToString("dd MMMM yyyy", [System.Globalization.CultureInfo]::GetCultureInfo("en-US"))) -like "*$currentDate*" ) {
+                   if ( ((Get-Date).ToString("dd MMMM yyyy", [System.Globalization.CultureInfo]::GetCultureInfo("en-US"))) -like "*$($sender.Text) $($monthDisplay.Text)*" ) {    
                         $sender.Background = [System.Windows.Media.Brushes]::Lightblue
                    }
                 }
@@ -1356,9 +1356,7 @@ function calender () {
                 param($sender, $e)
 
                 $sender.Background = [System.Windows.Media.Brushes]::Gray
-                $selectedDateT.Text = "$($sender.Text) $([cultureinfo]::GetCultureInfo('en-US').DateTimeFormat.MonthNames[$global:currentMonth - 1]) $global:currentYear"
-                #$selectedDateT.Text = "$($sender.Text) $($monthDisplay.Text)" # < wrong lanhuage some time
-                
+                $selectedDateT.Text = "$($sender.Text) $([cultureinfo]::GetCultureInfo('en-US').DateTimeFormat.MonthNames[$global:currentMonth - 1]) $currentYear"          
             })
 
             $dateGrid.Children.Add($txtBox)
@@ -1373,7 +1371,7 @@ function calender () {
         } else {
             $global:currentMonth--
         }
-        Update-Calendar
+        updateCalendar
     })
 
     $nextBtn.Add_Click({
@@ -1383,7 +1381,7 @@ function calender () {
         } else {
             $global:currentMonth++
         }
-        Update-Calendar
+        updateCalendar
     })
 
     # Hantering av knappar
@@ -1394,7 +1392,7 @@ function calender () {
     $closeBtn.Add_Click({ $Window.Hide() })
 
     # Initiera kalender
-    Update-Calendar
+    updateCalendar
 
     # Visa fönstret
     $window.ShowDialog()
