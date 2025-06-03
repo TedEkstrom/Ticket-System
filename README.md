@@ -13,7 +13,7 @@ In settings you can set where it should retrieve its tickets (of course in the s
 ![image](https://github.com/user-attachments/assets/e4f0a409-653c-455f-9231-a7772528bb49)
 
 
-The MakeTicket.dat file is for MakeTicket and must be placed in the same folder. This is how you tell the application where to place the new tickets. For example \\192.168.1.19\tickets.
+The MakeTicket.dat file is for MakeTicket and must be placed in the same folder. This is how you tell the application where to place the new tickets, for example \\192.168.1.19\tickets.
 
 
 More admin users
