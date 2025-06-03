@@ -771,7 +771,7 @@ function solvedTicket () {
     }
 }
 
-function NotSolvdTicket () {
+function NotsolvedTicket () {
     
     if ( $Tickets.SelectedItems.ticketName.Length -gt 0 ) {  
     
@@ -1205,7 +1205,7 @@ $inputXML = @"
         $global:loadedticket.Update += $updateT.Text + "`r`n-------------------------------- Solved ----------------------------`r`n"
         $global:loadedticket.Update += $updateT.Text + "`r`n--------------------------------------------------------------------`r`n"
         saveChanges
-        solvdTicket
+        solvedTicket
         searchForTickets
         $Window.Hide()
     })
@@ -1217,7 +1217,7 @@ $inputXML = @"
         $global:loadedticket.Update += $updateT.Text + "`r`n----------------------- Not able to be Solved ----------------------`r`n"
         $global:loadedticket.Update += $updateT.Text + "`r`n--------------------------------------------------------------------`r`n"
         saveChanges
-        NotSolvdTicket
+        NotsolvedTicket
         searchForTickets
         $Window.Hide()
     })
@@ -1593,11 +1593,11 @@ $inputXML = @"
         if ( $newNameT.Text ) {
 
             $NewT = (Get-ChildItem -Path $newTickets -File).FullName
-            $SolvdT = (Get-ChildItem -Path $SolvdTickets -File).FullName
+            $SolvdT = (Get-ChildItem -Path $solvedTickets -File).FullName
             $Prio1T = (Get-ChildItem -Path $prio1 -File).FullName
             $Prio2T = (Get-ChildItem -Path $prio2 -File).FullName
             $Prio3T = (Get-ChildItem -Path $prio3 -File).FullName
-            $NotSolvdT = (Get-ChildItem -Path $NotSolvdTickets -File).FullName
+            $NotSolvdT = (Get-ChildItem -Path $NotsolvedTickets -File).FullName
             $DeletedT = (Get-ChildItem -Path $deletedTickets -File).FullName
 
             $temp = $loadedtickets[$global:LastSelectTicket.ticketName].Split("\") | Select-Object -Last 1
