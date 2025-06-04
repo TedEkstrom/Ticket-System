@@ -33,7 +33,7 @@ if ( !$(Test-Path -Path "$Global:Settings\Userprofile.json" -ErrorAction Silentl
 
     $Global:Path = "$Global:Settings\tickets"
 
-    New-Item -Path "$Global:Settings\Userprofile.json" -ItemType File -Force -ErrorAction SilentlyContinue
+    New-Item -Path "$Global:Settings\Userprofile.json" -ItemType File -Force -ErrorAction SilentlyContinue | Out-Null
     $item = New-Object PSObject
     $item | Add-Member -type NoteProperty -Name 'TicketPath' -Value $Global:Path
     $item | Add-Member -type NoteProperty -Name 'NewR' -Value $true
