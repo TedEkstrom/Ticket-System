@@ -941,7 +941,7 @@ $inputXML = @"
         ## Måste komma på hur jag ska koppla två delar med varandra.
         ## Det enklaste är nog bara att använda en ny global variabel för comments.
         
-        if ( $allUpdatesT -eq "" ) {
+        if ( $allUpdatesT.Text -eq "" ) {
             $Global:comment = $allUpdatesT.Text + $commentT.Text + "`r--------------------------------------------------------------------" 
         } else {
             $Global:comment = $allUpdatesT.Text + $commentT.Text + "`r--------------------------------------------------------------------`r"
