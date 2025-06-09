@@ -391,7 +391,7 @@ function searchForTickets () {
 
        if ( $Prio1T ) {  
           $Prio1T | ForEach-Object {
-
+                
             $isTicketOwner = (Get-Content -Path $_ | ConvertFrom-Json).ticketOwner
 
               if ( $WithOutOwnerR.IsChecked  -or $isTicketOwner -eq "" ) { 
@@ -429,26 +429,12 @@ function searchForTickets () {
                          $loadedtickets.Add($temp, $_)
                      }
                } else {
-                    if ( $Global:ticketOwner -eq $isTicketOwner ) { 
+                    if ( $Global:ticketOwner -eq $isTicketOwner ) {
                         
                         $temp = ($_.Split("\") | Select-Object -Last 1).ToString().Replace(".json", "")
             
-                         if ( $temp -like "*$($SearchTB.Text)*" ) {                     
-                             $ticket = New-Object PSObject -Property @{
-                                ticketName = $temp
-                                Status = $json.status
-                                Priority = $json.prio
-                                ReportedBy = $json.username
-                                Date = $json.date
-                                AssignedTO = $json.ticketOwner
-                                DeadLine = $json.deadLine
-                             }
+                         if ( $temp -like "*$($SearchTB.Text)*" ) {
                              
-                             [void]$tickets.Items.Add($ticket)
-                             $loadedtickets.Add($temp, $_)
-
-                         } elseif ( $(Get-Content -Path $_) -like "*$($SearchTB.Text)*" ) {
-                            
                              $ticket = New-Object PSObject -Property @{
                                 ticketName = $temp
                                 Status = $json.status
@@ -459,6 +445,20 @@ function searchForTickets () {
                                 DeadLine = $json.deadLine
                              }
                              [void]$tickets.Items.Add($ticket)   
+                             $loadedtickets.Add($temp, $_)
+
+                         } elseif ( $(Get-Content -Path $_) -like "*$($SearchTB.Text)*" ) {
+                    
+                             $ticket = New-Object PSObject -Property @{
+                                ticketName = $temp
+                                Status = $json.status
+                                Priority = $json.prio
+                                ReportedBy = $json.username
+                                Date = $json.date
+                                AssignedTO = $json.ticketOwner
+                                DeadLine = $json.deadLine
+                             }
+                             [void]$tickets.Items.Add($ticket)    
                              $loadedtickets.Add($temp, $_)
                          }
                     }
@@ -944,7 +944,7 @@ $inputXML = @"
         if ( $allUpdatesT.Text -eq "" ) {
             $Global:comment = $allUpdatesT.Text + $commentT.Text + "`r--------------------------------------------------------------------" 
         } else {
-            $Global:comment = $allUpdatesT.Text + $commentT.Text + "`r--------------------------------------------------------------------`r"
+            $Global:comment = $allUpdatesT.Text + "`r" + $commentT.Text + "`r--------------------------------------------------------------------`r"
         }
     
         $Window.hide()
