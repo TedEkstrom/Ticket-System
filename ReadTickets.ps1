@@ -16,6 +16,7 @@ $Global:Settings = "$env:USERPROFILE\Readtickets"
 $Global:Path = ""
 
 $Global:ticketOwner = ""
+$Global:autoMove = $true
  
 $newTickets = "$Global:Path\new\"
 $solvedTickets = "$Global:Path\solved\"
@@ -43,6 +44,7 @@ if ( !$(Test-Path -Path "$Global:Settings\Userprofile.json" -ErrorAction Silentl
     $item | Add-Member -type NoteProperty -Name 'SolvedR' -Value $false
     $item | Add-Member -type NoteProperty -Name 'NotSolvedR' -Value $false
     $item | Add-Member -type NoteProperty -Name 'WithOutOwner' -Value $true
+    $item | Add-Member -type NoteProperty -Name 'automove' -Value $true
     $item | Add-Member -type NoteProperty -Name 'user' -Value $null
         
     $item | ConvertTo-Json | Out-File -FilePath "$Global:Settings\Userprofile.json"
@@ -322,6 +324,7 @@ function loadAutosaveSettings () {
     $SolvedR.IsChecked = $AutoSave.SolvedR
     $NotSolvedR.IsChecked = $AutoSave.NotSolvedR
     $WithOutOwnerR.IsChecked = $AutoSave.WithOutOwner
+    $Global:autoMove = $AutoSave.automove
     $Global:ticketOwner = $AutoSave.user
 } 
 loadAutosaveSettings
@@ -1641,7 +1644,7 @@ $inputXML = @"
 }
 
 
-function autosaveSettings () {
+function autosaveSettings () { Write-Host $automoveCB
 
     $item = New-Object PSObject
     $item | Add-Member -type NoteProperty -Name 'TicketPath' -Value $Global:Path
@@ -1652,8 +1655,9 @@ function autosaveSettings () {
     $item | Add-Member -type NoteProperty -Name 'SolvedR' -Value $SolvedR.IsChecked
     $item | Add-Member -type NoteProperty -Name 'NotSolvedR' -Value $NotSolvedR.IsChecked
     $item | Add-Member -type NoteProperty -Name 'WithOutOwner' -Value $WithOutOwnerR.IsChecked
+    $item | Add-Member -type NoteProperty -Name 'automove' -Value $Global:autoMove
     $item | Add-Member -type NoteProperty -Name 'user' -Value $Global:ticketOwner
-        
+         
     $item | ConvertTo-Json | Out-File -FilePath "$Global:Settings\Userprofile.json"
 }
 
@@ -1667,7 +1671,7 @@ $inputXML = @"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:SelectUser"
         mc:Ignorable="d"
-        Title="Settings" Height="215" Width="383">
+        Title="Settings" Height="260" Width="583">
     <Grid>
         <Border Background="White" CornerRadius="10" Padding="10" Margin="10">
             <StackPanel>
@@ -1682,6 +1686,11 @@ $inputXML = @"
                 <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
                     <TextBlock Text="Path to ticket:" FontSize="14" FontWeight="Bold" />
                     <TextBox Name="pathT" TextWrapping="Wrap" Text="TextBox" Width="200" Margin="10,0,0,0"/>
+                </StackPanel>
+                <TextBlock Text="Move tickets to the correct priority if it`s are below paused as the deadline approaches." />
+                <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                    <TextBlock Text="Move ticket automatic:" FontSize="14" FontWeight="Bold"  />
+                    <CheckBox Name="automoveCB" Width="200" Margin="10,3,0,0" />
                 </StackPanel>
 
                 <!-- Kontrollknappar -->
@@ -1707,6 +1716,7 @@ $inputXML = @"
         $pathT = $Window.FindName("pathT")
         $saveB = $Window.FindName("saveB")
         $closeB = $Window.FindName("closeB")
+        $automoveCB = $Window.FindName("automoveCB")
     }
     catch {
         Write-Warning $_.Exception
@@ -1734,6 +1744,8 @@ $inputXML = @"
         }
     }
 
+    $automoveCB.IsChecked = $Global:autoMove
+
     $pathT.Text = $Global:Path 
 
     if (!$Global:Path) {
@@ -1749,13 +1761,14 @@ $inputXML = @"
         $Global:ticketOwner = $selectUserCB.SelectedValue
         $ticketOwnerL.Text = "User: $Global:ticketOwner"
         $Global:Path = $pathT.Text
+        $Global:autoMove = $automoveCB.IsChecked
         autosaveSettings
         searchForTickets
         $Window.Hide()
     })
 
     $closeB.Add_Click({$Window.Hide()})
-    [Void]$Window.ShowDialog();
+    [Void]$Window.ShowDialog()
 }
 
 ## TESTING
@@ -1770,10 +1783,8 @@ $Timer1.add_Tick({
     if ( !$notsolvedR.IsChecked -or $solvedR.IsChecked ) {
 
         foreach ($item in $tickets.Items) {
-            if ( ![string]::IsNullOrEmpty($item.Deadline) ) {
-                
+            if ( ![string]::IsNullOrEmpty($item.Deadline) ) {              
                 $deadline = Get-Date $item.Deadline -ErrorAction SilentlyContinue
-                #$deadline = [datetime]::ParseExact($item.Deadline, "d MMMM yyyy", [cultureinfo]::InvariantCulture) < If problem still exist with wrong format.
                 $limit = $($deadline - (Get-Date)).days
                 
                 if ( $limit -le 8 -and $limit -ge 4 ) {
@@ -1824,6 +1835,35 @@ $Timer2.add_Tick({
             $tickets.SelectedItem = $newSelection
         } elseif ($selectedIndex -ge 0 -and $selectedIndex -lt $tickets.Items.Count) {
             $tickets.SelectedIndex = $selectedIndex
+        }
+    }
+
+    if ( $Global:autoMove ) {
+        $pauseT = (Get-ChildItem -Path $pause -File).FullName
+        if ( $pauseT ) {  
+            $pauseT | ForEach-Object {
+                $temp = ($_.Split("\") | Select-Object -Last 1).ToString().Replace(".json", "")
+                $json = Get-Content -Path $_ | ConvertFrom-Json
+
+                if ( ![string]::IsNullOrEmpty($json.deadLine) ) {
+                    $deadline = Get-Date $json.deadLine -ErrorAction SilentlyContinue
+                    $limit = $($deadline - (Get-Date)).days
+
+                    if ( $limit -le 8 -and $limit -ge 0 -or $limit -le 0 ) {
+                    
+                        if ( $json.prio -eq "Prio 1" ) { 
+                           Move-Item -Path $_ -Destination $prio1    
+                           searchForTickets 
+                        } elseif ( $json.prio -eq "Prio 2" ) {
+                           Move-Item -Path $_ -Destination $prio2   
+                           searchForTickets 
+                        }elseif ( $json.prio -eq "Prio 3" ) {
+                           Move-Item -Path $_ -Destination $prio3 
+                           searchForTickets 
+                        }
+                    }
+                }
+            }
         }
     }
  })
