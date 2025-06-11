@@ -1644,7 +1644,7 @@ $inputXML = @"
 }
 
 
-function autosaveSettings () { Write-Host $automoveCB
+function autosaveSettings () { 
 
     $item = New-Object PSObject
     $item | Add-Member -type NoteProperty -Name 'TicketPath' -Value $Global:Path
