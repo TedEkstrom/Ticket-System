@@ -336,6 +336,41 @@ $ticketOwnerL.Text = "User: $Global:ticketOwner"
 
 ## Functions
 
+function scanJsonFiles ( $switch, $temp, $json) {
+    
+    if ( $switch -eq 0 ) {
+        $ticket = New-Object PSObject -Property @{
+            ticketName = $temp
+            Status = "New"
+            Priority = $json.prio
+            ReportedBy = $json.username
+            Date = $json.date
+            AssignedTO = $json.ticketOwner
+            DeadLine = $json.deadLine
+        }
+    } else {
+        $ticket = New-Object PSObject -Property @{
+        ticketName = $temp
+        Status = $json.status
+        Priority = $json.prio
+        ReportedBy = $json.username
+        Date = $json.date
+        AssignedTO = $json.ticketOwner
+        DeadLine = $json.deadLine
+        }
+    }
+
+    if ( $temp -like "*$($SearchTB.Text)*" ) {
+        [void]$tickets.Items.Add($ticket)  
+        $loadedtickets.Add($temp, $_)
+
+    } elseif ( $(Get-Content -Path $_) -like "*$($SearchTB.Text)*" ) {
+            
+        [void]$tickets.Items.Add($ticket)  
+        $loadedtickets.Add($temp, $_)
+    }
+}
+
 function searchForTickets () {
 
     $tickets.Items.Clear()
@@ -352,38 +387,10 @@ function searchForTickets () {
        $NewT = (Get-ChildItem -Path $newTickets -File).FullName
 
        if ( $NewT ) {
-        
           $NewT | ForEach-Object {
              $temp = ($_.Split("\") | Select-Object -Last 1).ToString().Replace(".json", "")
              $json = Get-Content -Path $_ | ConvertFrom-Json
-
-             if ( $temp -like "*$($SearchTB.Text)*" ) {
-                 $ticket = New-Object PSObject -Property @{
-                            ticketName = $temp
-                            Status = "New"
-                            Priority = $json.prio
-                            ReportedBy = $json.username
-                            Date = $json.date
-                            AssignedTO = $json.ticketOwner
-                            DeadLine = $json.deadLine
-                         }
-                 [void]$tickets.Items.Add($ticket)  
-                 $loadedtickets.Add($temp, $_)
-
-             } elseif ( $(Get-Content -Path $_) -like "*$($SearchTB.Text)*" ) {
-                    
-                 $ticket = New-Object PSObject -Property @{
-                            ticketName = $temp
-                            Status = "New"
-                            Priority = $json.prio
-                            ReportedBy = $json.username
-                            Date = $json.date
-                            AssignedTO = $json.ticketOwner
-                            DeadLine = $json.deadLine
-                         }
-                 [void]$tickets.Items.Add($ticket)  
-                 $loadedtickets.Add($temp, $_)
-             }
+             scanJsonFiles -switch 0 -temp $temp -json $json
           }
        }
     }
@@ -394,362 +401,93 @@ function searchForTickets () {
 
        if ( $Prio1T ) {  
           $Prio1T | ForEach-Object {
-                
-            $isTicketOwner = (Get-Content -Path $_ | ConvertFrom-Json).ticketOwner
-
-              if ( $WithOutOwnerR.IsChecked  -or $isTicketOwner -eq "" ) { 
-
-                     $temp = ($_.Split("\") | Select-Object -Last 1).ToString().Replace(".json", "")
-                     $json = Get-Content -Path $_ | ConvertFrom-Json
-
-                     if ( $temp -like "*$($SearchTB.Text)*" ) {
-                         
-                         $ticket = New-Object PSObject -Property @{
-                            ticketName = $temp
-                            Status = $json.status
-                            Priority = $json.prio
-                            ReportedBy = $json.username
-                            Date = $json.date
-                            AssignedTO = $json.ticketOwner
-                            DeadLine = $json.deadLine
-                         }
-                         [void]$tickets.Items.Add($ticket)   
-                         $tickets.HorizontalContentAlignment = "Center"
-                         $loadedtickets.Add($temp, $_)
-
-                     } elseif ( $(Get-Content -Path $_) -like "*$($SearchTB.Text)*" ) {
-                    
-                         $ticket = New-Object PSObject -Property @{
-                            ticketName = $temp
-                            Status = $json.status
-                            Priority = $json.prio
-                            ReportedBy = $json.username
-                            Date = $json.date
-                            AssignedTO = $json.ticketOwner
-                            DeadLine = $json.deadLine
-                         }
-                         [void]$tickets.Items.Add($ticket)   
-                         $loadedtickets.Add($temp, $_)
-                     }
-               } else {
-                    if ( $Global:ticketOwner -eq $isTicketOwner ) {
-                        
-                        $temp = ($_.Split("\") | Select-Object -Last 1).ToString().Replace(".json", "")
+                $isTicketOwner = (Get-Content -Path $_ | ConvertFrom-Json).ticketOwner
+                $temp = ($_.Split("\") | Select-Object -Last 1).ToString().Replace(".json", "")
+                $json = Get-Content -Path $_ | ConvertFrom-Json
             
-                         if ( $temp -like "*$($SearchTB.Text)*" ) {
-                             
-                             $ticket = New-Object PSObject -Property @{
-                                ticketName = $temp
-                                Status = $json.status
-                                Priority = $json.prio
-                                ReportedBy = $json.username
-                                Date = $json.date
-                                AssignedTO = $json.ticketOwner
-                                DeadLine = $json.deadLine
-                             }
-                             [void]$tickets.Items.Add($ticket)   
-                             $loadedtickets.Add($temp, $_)
-
-                         } elseif ( $(Get-Content -Path $_) -like "*$($SearchTB.Text)*" ) {
-                    
-                             $ticket = New-Object PSObject -Property @{
-                                ticketName = $temp
-                                Status = $json.status
-                                Priority = $json.prio
-                                ReportedBy = $json.username
-                                Date = $json.date
-                                AssignedTO = $json.ticketOwner
-                                DeadLine = $json.deadLine
-                             }
-                             [void]$tickets.Items.Add($ticket)    
-                             $loadedtickets.Add($temp, $_)
-                         }
-                    }
-               }
-          }
-       }
+                if ( $WithOutOwnerR.IsChecked  -or $isTicketOwner -eq "" ) { 
+                    scanJsonFiles -switch 1 -temp $temp -json $json
+                     
+                } elseif ( $Global:ticketOwner -eq $isTicketOwner ) {
+                    scanJsonFiles -switch 1 -temp $temp -json $json
+                }
+            }
+        }
     }
     
     if ( $Prio2R.IsChecked  ) {
        
-       $Prio2T = (Get-ChildItem -Path $prio2 -File).FullName
+        $Prio2T = (Get-ChildItem -Path $prio2 -File).FullName
 
-       if ( $Prio2T ) {  
-          $Prio2T | ForEach-Object {
-                
-            $isTicketOwner = (Get-Content -Path $_ | ConvertFrom-Json).ticketOwner
+        if ( $Prio2T ) {  
+            $Prio2T | ForEach-Object {
 
-              if ( $WithOutOwnerR.IsChecked  -or $isTicketOwner -eq "" ) { 
-
-                     $temp = ($_.Split("\") | Select-Object -Last 1).ToString().Replace(".json", "")
-                     $json = Get-Content -Path $_ | ConvertFrom-Json
-
-                     if ( $temp -like "*$($SearchTB.Text)*" ) {
-                         
-                         $ticket = New-Object PSObject -Property @{
-                            ticketName = $temp
-                            Status = $json.status
-                            Priority = $json.prio
-                            ReportedBy = $json.username
-                            Date = $json.date
-                            AssignedTO = $json.ticketOwner
-                            DeadLine = $json.deadLine
-                         }
-                         [void]$tickets.Items.Add($ticket)   
-                         $tickets.HorizontalContentAlignment = "Center"
-                         $loadedtickets.Add($temp, $_)
-
-                     } elseif ( $(Get-Content -Path $_) -like "*$($SearchTB.Text)*" ) {
-                    
-                         $ticket = New-Object PSObject -Property @{
-                            ticketName = $temp
-                            Status = $json.status
-                            Priority = $json.prio
-                            ReportedBy = $json.username
-                            Date = $json.date
-                            AssignedTO = $json.ticketOwner
-                            DeadLine = $json.deadLine
-                         }
-                         [void]$tickets.Items.Add($ticket)   
-                         $loadedtickets.Add($temp, $_)
-                     }
-               } else {
-                    if ( $Global:ticketOwner -eq $isTicketOwner ) {
-                        
-                        $temp = ($_.Split("\") | Select-Object -Last 1).ToString().Replace(".json", "")
+                $isTicketOwner = (Get-Content -Path $_ | ConvertFrom-Json).ticketOwner
+                $temp = ($_.Split("\") | Select-Object -Last 1).ToString().Replace(".json", "")
+                $json = Get-Content -Path $_ | ConvertFrom-Json
             
-                         if ( $temp -like "*$($SearchTB.Text)*" ) {
-                             
-                             $ticket = New-Object PSObject -Property @{
-                                ticketName = $temp
-                                Status = $json.status
-                                Priority = $json.prio
-                                ReportedBy = $json.username
-                                Date = $json.date
-                                AssignedTO = $json.ticketOwner
-                                DeadLine = $json.deadLine
-                             }
-                             [void]$tickets.Items.Add($ticket)   
-                             $loadedtickets.Add($temp, $_)
-
-                         } elseif ( $(Get-Content -Path $_) -like "*$($SearchTB.Text)*" ) {
-                    
-                             $ticket = New-Object PSObject -Property @{
-                                ticketName = $temp
-                                Status = $json.status
-                                Priority = $json.prio
-                                ReportedBy = $json.username
-                                Date = $json.date
-                                AssignedTO = $json.ticketOwner
-                                DeadLine = $json.deadLine
-                             }
-                             [void]$tickets.Items.Add($ticket)    
-                             $loadedtickets.Add($temp, $_)
-                         }
-                    }
-               }
-          }
-       }
+                if ( $WithOutOwnerR.IsChecked  -or $isTicketOwner -eq "" ) { 
+                    scanJsonFiles -switch 1 -temp $temp -json $json
+                     
+                } elseif ( $Global:ticketOwner -eq $isTicketOwner ) {
+                    scanJsonFiles -switch 1 -temp $temp -json $json
+                }             
+            }
+        }
     }
 
     if ( $Prio3R.IsChecked  ) {
 
-       $Prio3T = (Get-ChildItem -Path $prio3 -File).FullName
+        $Prio3T = (Get-ChildItem -Path $prio3 -File).FullName
+       
+        if ( $Prio3T ) {  
+            $Prio3T | ForEach-Object {
 
-       if ( $Prio3T ) {  
-          $Prio3T | ForEach-Object {
-             
-            $isTicketOwner = (Get-Content -Path $_ | ConvertFrom-Json).ticketOwner
-
-              if ( $WithOutOwnerR.IsChecked  -or $isTicketOwner -eq "" ) { 
-
-                     $temp = ($_.Split("\") | Select-Object -Last 1).ToString().Replace(".json", "")
-                     $json = Get-Content -Path $_ | ConvertFrom-Json
-
-                     if ( $temp -like "*$($SearchTB.Text)*" ) {
-                         
-                         $ticket = New-Object PSObject -Property @{
-                            ticketName = $temp
-                            Status = $json.status
-                            Priority = $json.prio
-                            ReportedBy = $json.username
-                            Date = $json.date
-                            AssignedTO = $json.ticketOwner
-                            DeadLine = $json.deadLine
-                         }
-                         [void]$tickets.Items.Add($ticket)   
-                         $tickets.HorizontalContentAlignment = "Center"
-                         $loadedtickets.Add($temp, $_)
-
-                     } elseif ( $(Get-Content -Path $_) -like "*$($SearchTB.Text)*" ) {
-                    
-                         $ticket = New-Object PSObject -Property @{
-                            ticketName = $temp
-                            Status = $json.status
-                            Priority = $json.prio
-                            ReportedBy = $json.username
-                            Date = $json.date
-                            AssignedTO = $json.ticketOwner
-                            DeadLine = $json.deadLine
-                         }
-                         [void]$tickets.Items.Add($ticket)   
-                         $loadedtickets.Add($temp, $_)
-                     }
-               } else {
-                    if ( $Global:ticketOwner -eq $isTicketOwner ) {
-                        
-                        $temp = ($_.Split("\") | Select-Object -Last 1).ToString().Replace(".json", "")
+                $isTicketOwner = (Get-Content -Path $_ | ConvertFrom-Json).ticketOwner
+                $temp = ($_.Split("\") | Select-Object -Last 1).ToString().Replace(".json", "")
+                $json = Get-Content -Path $_ | ConvertFrom-Json
             
-                         if ( $temp -like "*$($SearchTB.Text)*" ) {
-                             
-                             $ticket = New-Object PSObject -Property @{
-                                ticketName = $temp
-                                Status = $json.status
-                                Priority = $json.prio
-                                ReportedBy = $json.username
-                                Date = $json.date
-                                AssignedTO = $json.ticketOwner
-                                DeadLine = $json.deadLine
-                             }
-                             [void]$tickets.Items.Add($ticket)   
-                             $loadedtickets.Add($temp, $_)
-
-                         } elseif ( $(Get-Content -Path $_) -like "*$($SearchTB.Text)*" ) {
-                    
-                             $ticket = New-Object PSObject -Property @{
-                                ticketName = $temp
-                                Status = $json.status
-                                Priority = $json.prio
-                                ReportedBy = $json.username
-                                Date = $json.date
-                                AssignedTO = $json.ticketOwner
-                                DeadLine = $json.deadLine
-                             }
-                             [void]$tickets.Items.Add($ticket)   
-                             $loadedtickets.Add($temp, $_)
-                         }
-                    }
-               }
-          }
-       }
+                if ( $WithOutOwnerR.IsChecked  -or $isTicketOwner -eq "" ) { 
+                    scanJsonFiles -switch 1 -temp $temp -json $json
+                     
+                } elseif ( $Global:ticketOwner -eq $isTicketOwner ) {
+                    scanJsonFiles -switch 1 -temp $temp -json $json
+                }             
+            }
+        }
     }
 
     if ( $SolvedR.IsChecked  ) {
        $SolvedT = (Get-ChildItem -Path $solvedTickets -File).FullName
-
        if ( $SolvedT ) {  
           $SolvedT | ForEach-Object {
              $temp = ($_.Split("\") | Select-Object -Last 1).ToString().Replace(".json", "")
              $json = Get-Content -Path $_ | ConvertFrom-Json
-
-             if ( $temp -like "*$($SearchTB.Text)*" ) {
-                 $ticket = New-Object PSObject -Property @{
-                            ticketName = $temp
-                            Status = $json.status
-                            Priority = $json.prio
-                            ReportedBy = $json.username
-                            Date = $json.date
-                            AssignedTO = $json.ticketOwner
-                            DeadLine = $json.deadLine
-                         }
-                 [void]$tickets.Items.Add($ticket)  
-                 $loadedtickets.Add($temp, $_)
-
-             } elseif ( $(Get-Content -Path $_) -like "*$($SearchTB.Text)*" ) {
-                    
-                 $ticket = New-Object PSObject -Property @{
-                            ticketName = $temp
-                            Status = $json.status
-                            Priority = $json.prio
-                            ReportedBy = $json.username
-                            Date = $json.date
-                            AssignedTO = $json.ticketOwner
-                            DeadLine = $json.deadLine
-                         }
-                 [void]$tickets.Items.Add($ticket)  
-                 $loadedtickets.Add($temp, $_)
-             }
+             scanJsonFiles -switch 1 -temp $temp -json $json
+             
           }
        }
     }
 
     if ( $notSolvedR.IsChecked  ) {
-
        $NotSolvedT = (Get-ChildItem -Path $NotSolvedTickets -File).FullName
-
        if ( $NotSolvedT ) {  
           $NotSolvedT | ForEach-Object {
              $temp = ($_.Split("\") | Select-Object -Last 1).ToString().Replace(".json", "")
              $json = Get-Content -Path $_ | ConvertFrom-Json
-
-             if ( $temp -like "*$($SearchTB.Text)*" ) {
-                 $ticket = New-Object PSObject -Property @{
-                            ticketName = $temp
-                            Status = $json.status
-                            Priority = $json.prio
-                            ReportedBy = $json.username
-                            Date = $json.date
-                            AssignedTO = $json.ticketOwner
-                            DeadLine = $json.deadLine
-                         }
-                 [void]$tickets.Items.Add($ticket)  
-                 $loadedtickets.Add($temp, $_)
-
-             } elseif ( $(Get-Content -Path $_) -like "*$($SearchTB.Text)*" ) {
-                    
-                 $ticket = New-Object PSObject -Property @{
-                            ticketName = $temp
-                            Status = $json.status
-                            Priority = $json.prio
-                            ReportedBy = $json.username
-                            Date = $json.date
-                            AssignedTO = $json.ticketOwner
-                            DeadLine = $json.deadLine
-                         }
-                 [void]$tickets.Items.Add($ticket)  
-                 $loadedtickets.Add($temp, $_)
-             }
+             scanJsonFiles -switch 1 -temp $temp -json $json 
           }
        }
     }
-
     
     if ( $pauseR.IsChecked  ) {
-
        $pauseT = (Get-ChildItem -Path $pause -File).FullName
-
        if ( $pauseT ) {  
           $pauseT | ForEach-Object {
              $temp = ($_.Split("\") | Select-Object -Last 1).ToString().Replace(".json", "")
              $json = Get-Content -Path $_ | ConvertFrom-Json
-
-             if ( $temp -like "*$($SearchTB.Text)*" ) {
-                 $ticket = New-Object PSObject -Property @{
-                            ticketName = $temp
-                            Status = $json.status
-                            Priority = $json.prio
-                            ReportedBy = $json.username
-                            Date = $json.date
-                            AssignedTO = $json.ticketOwner
-                            DeadLine = $json.deadLine
-                         }
-                 [void]$tickets.Items.Add($ticket)  
-                 $loadedtickets.Add($temp, $_)
-
-             } elseif ( $(Get-Content -Path $_) -like "*$($SearchTB.Text)*" ) {
-                    
-                 $ticket = New-Object PSObject -Property @{
-                            ticketName = $temp
-                            Status = $json.status
-                            Priority = $json.prio
-                            ReportedBy = $json.username
-                            Date = $json.date
-                            AssignedTO = $json.ticketOwner
-                            DeadLine = $json.deadLine
-                         }
-                 [void]$tickets.Items.Add($ticket)  
-                 $loadedtickets.Add($temp, $_)
-             }
+             scanJsonFiles -switch 1 -temp $temp -json $json
+             
           }
        }
     }
