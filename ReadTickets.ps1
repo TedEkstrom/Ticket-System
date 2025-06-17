@@ -46,6 +46,7 @@ if ( !$(Test-Path -Path "$Global:Settings\Userprofile.json" -ErrorAction Silentl
     $item | Add-Member -type NoteProperty -Name 'WithOutOwner' -Value $true
     $item | Add-Member -type NoteProperty -Name 'automove' -Value $true
     $item | Add-Member -type NoteProperty -Name 'user' -Value $null
+    $item | Add-Member -type NoteProperty -Name 'showWithNoOwners' -Value $false
         
     $item | ConvertTo-Json | Out-File -FilePath "$Global:Settings\Userprofile.json"
 }
@@ -197,8 +198,9 @@ $inputXML = @"
                     <CheckBox Name="prio3R" Content="Prio 3" Margin="5"/>
                     <CheckBox Name="solvedR" Content="Solved" Margin="5"/>
                     <CheckBox Name="notSolvedR" Content="Not solved" Margin="5"/>
-                    <CheckBox Name="pausedR" Content="Paused" Margin="5"/>
-                    <CheckBox Name="withOutOwnerR" Content="Show all tickets" Margin="5"/>
+                    <CheckBox Name="pausedR" Content="Paused" Margin="5"/> 
+                    <CheckBox Name="showWithNoOwners" Content="Show no assigned" Margin="5"/>
+                    <CheckBox Name="showAllTicketsR" Content="Show all tickets" Margin="5"/>
                 </WrapPanel>
             </StackPanel>
 
@@ -291,7 +293,8 @@ try {
     $notsolvedR = $MainWindow.FindName("notSolvedR") #< ändra till $notSolvedR
     $solvedR = $MainWindow.FindName("solvedR") #< ändra till $solvedR
     $pauseR = $MainWindow.FindName("pausedR")
-    $withOutOwnerR = $MainWindow.FindName("withOutOwnerR")
+    $showAllTicketsR = $MainWindow.FindName("showAllTicketsR")
+    $showWithNoOwners = $MainWindow.FindName("showWithNoOwners")
 
     $newTicketB = $MainWindow.FindName("newTicketB")
     $renameTicketB = $MainWindow.FindName("renameTicketB")
@@ -323,9 +326,10 @@ function loadAutosaveSettings () {
     $Prio3R.IsChecked = $AutoSave.Prio3R
     $SolvedR.IsChecked = $AutoSave.SolvedR
     $NotSolvedR.IsChecked = $AutoSave.NotSolvedR
-    $WithOutOwnerR.IsChecked = $AutoSave.WithOutOwner
+    $showAllTicketsR.IsChecked = $AutoSave.WithOutOwner
     $Global:autoMove = $AutoSave.automove
     $Global:ticketOwner = $AutoSave.user
+    $showWithNoOwners.IsChecked = $AutoSave.showWithNoOwners
 } 
 loadAutosaveSettings
 
@@ -335,6 +339,87 @@ $ticketOwnerL.Text = "User: $Global:ticketOwner"
 ####################################################
 
 ## Functions
+
+$global:isProgrssbar = $false
+
+Function showProgressBar ( $show ) {
+  
+  if ( $show -and !$global:isProgrssbar ) {
+    # Credit to https://tiberriver256.github.io/powershell/PowerShellProgress-Pt1/
+    # Made some minor changes on the UI
+
+        $global:isProgrssbar = $true
+
+        [void][System.Reflection.Assembly]::LoadWithPartialName('presentationframework')
+        $syncHash = [hashtable]::Synchronized(@{})
+        $newRunspace =[runspacefactory]::CreateRunspace()
+        $syncHash.Runspace = $newRunspace
+        $newRunspace.ApartmentState = "STA"
+        $newRunspace.ThreadOptions = "ReuseThread"
+        $newRunspace.Open()
+        $newRunspace.SessionStateProxy.SetVariable("syncHash",$syncHash)
+        $PowerShellCommand = [PowerShell]::Create().AddScript({
+        [xml]$xaml = @"
+        <Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+            Title="Laddar..." Height="150" Width="300" WindowStartupLocation="CenterScreen" Topmost="True">
+        <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+            <TextBlock Text="Arbetar..." Margin="0,0,0,10" HorizontalAlignment="Center"/>
+            <ProgressBar IsIndeterminate="True" Height="20" Width="200" HorizontalAlignment="Center"/>
+        </StackPanel>
+    </Window>
+"@
+
+        $reader=(New-Object System.Xml.XmlNodeReader $xaml)
+        $syncHash.Window=[Windows.Markup.XamlReader]::Load( $reader )
+        #===========================================================================
+        # Store Form Objects In PowerShell
+        #===========================================================================
+        $xaml.SelectNodes("//*[@Name]") | %{ $SyncHash."$($_.Name)" = $SyncHash.Window.FindName($_.Name)}
+
+        $syncHash.top
+        $syncHash.Window.ShowDialog() | Out-Null
+        $syncHash.Error = $Error
+
+    })
+    $PowerShellCommand.Runspace = $newRunspace
+    $data = $PowerShellCommand.BeginInvoke()
+
+
+    Register-ObjectEvent -InputObject $SyncHash.Runspace `
+            -EventName 'AvailabilityChanged' `
+            -Action {
+
+                    if($Sender.RunspaceAvailability -eq "Available")
+                    {
+                        $Sender.Closeasync()
+                        $Sender.Dispose()
+                    }
+                }
+    return $SyncHash
+  }      
+}
+
+function closeProgressBar {
+    
+    Param (
+        [Parameter(Mandatory=$false)]
+        [System.Object[]]$ProgressBar,
+
+        [Parameter()]
+        $Show   
+    )
+
+    if ( $show -and $global:isProgrssbar ) {
+        
+        Start-Sleep -Milliseconds 50
+        $global:isProgrssbar = $false
+        $ProgressBar.Window.Dispatcher.Invoke([action]{
+          $ProgressBar.Window.Close()
+        }, "Normal")
+    }
+
+}
+
 
 function scanJsonFiles ( $switch, $temp, $json) {
     
@@ -371,19 +456,15 @@ function scanJsonFiles ( $switch, $temp, $json) {
     }
 }
 
-function searchForTickets () {
+function searchForTickets ($show) {
 
     $tickets.Items.Clear()
     $loadedtickets.Clear()
 
-    ## Status kan vara att de Väntar, Öppnad, osv ...
-
-
+    $ProgressBar = showProgressBar -show $show
+ 
     if ( $NewR.IsChecked  ) {
-        
-       ## Eftersom sköningen måste genomföras på samtliga i-checkade,
-       ## är det bättre att köra sökningen på samtliga.
-
+     
        $NewT = (Get-ChildItem -Path $newTickets -File).FullName
 
        if ( $NewT ) {
@@ -401,58 +482,82 @@ function searchForTickets () {
 
        if ( $Prio1T ) {  
           $Prio1T | ForEach-Object {
-                $isTicketOwner = (Get-Content -Path $_ | ConvertFrom-Json).ticketOwner
+                $containsTicketOwner = (Get-Content -Path $_ | ConvertFrom-Json).ticketOwner
                 $temp = ($_.Split("\") | Select-Object -Last 1).ToString().Replace(".json", "")
                 $json = Get-Content -Path $_ | ConvertFrom-Json
-            
-                if ( $WithOutOwnerR.IsChecked  -or $isTicketOwner -eq "" ) { 
+                
+                if ( $showAllTicketsR.IsChecked ) {
+
                     scanJsonFiles -switch 1 -temp $temp -json $json
-                     
-                } elseif ( $Global:ticketOwner -eq $isTicketOwner ) {
-                    scanJsonFiles -switch 1 -temp $temp -json $json
-                }
+
+                } elseif ( $showWithNoOwners.IsChecked ) {
+                    
+                    if ( [string]::IsNullOrEmpty($containsTicketOwner) ) { 
+                        
+                        scanJsonFiles -switch 1 -temp $temp -json $json
+                    }
+                } elseif ( !$showAllTicketsR.IsChecked ) {  
+                    
+                    if ( ![string]::IsNullOrEmpty($containsTicketOwner) ) { 
+                        scanJsonFiles -switch 1 -temp $temp -json $json
+                    }
+                }           
             }
         }
     }
     
     if ( $Prio2R.IsChecked  ) {
-       
         $Prio2T = (Get-ChildItem -Path $prio2 -File).FullName
-
         if ( $Prio2T ) {  
             $Prio2T | ForEach-Object {
-
-                $isTicketOwner = (Get-Content -Path $_ | ConvertFrom-Json).ticketOwner
+                $containsTicketOwner = (Get-Content -Path $_ | ConvertFrom-Json).ticketOwner
                 $temp = ($_.Split("\") | Select-Object -Last 1).ToString().Replace(".json", "")
                 $json = Get-Content -Path $_ | ConvertFrom-Json
-            
-                if ( $WithOutOwnerR.IsChecked  -or $isTicketOwner -eq "" ) { 
+                
+                if ( $showAllTicketsR.IsChecked ) {
+
                     scanJsonFiles -switch 1 -temp $temp -json $json
-                     
-                } elseif ( $Global:ticketOwner -eq $isTicketOwner ) {
-                    scanJsonFiles -switch 1 -temp $temp -json $json
-                }             
+
+                } elseif ( $showWithNoOwners.IsChecked ) {
+                    
+                    if ( [string]::IsNullOrEmpty($containsTicketOwner) ) { 
+                        
+                        scanJsonFiles -switch 1 -temp $temp -json $json
+                    }
+                } elseif ( !$showAllTicketsR.IsChecked ) {  
+                    
+                    if ( ![string]::IsNullOrEmpty($containsTicketOwner) ) { 
+                        scanJsonFiles -switch 1 -temp $temp -json $json
+                    }
+                }           
             }
         }
     }
 
     if ( $Prio3R.IsChecked  ) {
-
-        $Prio3T = (Get-ChildItem -Path $prio3 -File).FullName
-       
+        $Prio3T = (Get-ChildItem -Path $prio3 -File).FullName       
         if ( $Prio3T ) {  
             $Prio3T | ForEach-Object {
-
-                $isTicketOwner = (Get-Content -Path $_ | ConvertFrom-Json).ticketOwner
+                $containsTicketOwner = (Get-Content -Path $_ | ConvertFrom-Json).ticketOwner
                 $temp = ($_.Split("\") | Select-Object -Last 1).ToString().Replace(".json", "")
                 $json = Get-Content -Path $_ | ConvertFrom-Json
-            
-                if ( $WithOutOwnerR.IsChecked  -or $isTicketOwner -eq "" ) { 
+                
+                if ( $showAllTicketsR.IsChecked ) {
+
                     scanJsonFiles -switch 1 -temp $temp -json $json
-                     
-                } elseif ( $Global:ticketOwner -eq $isTicketOwner ) {
-                    scanJsonFiles -switch 1 -temp $temp -json $json
-                }             
+
+                } elseif ( $showWithNoOwners.IsChecked ) {
+                    
+                    if ( [string]::IsNullOrEmpty($containsTicketOwner) ) { 
+                        
+                        scanJsonFiles -switch 1 -temp $temp -json $json
+                    }
+                } elseif ( !$showAllTicketsR.IsChecked ) {  
+                    
+                    if ( ![string]::IsNullOrEmpty($containsTicketOwner) ) { 
+                        scanJsonFiles -switch 1 -temp $temp -json $json
+                    }
+                }           
             }
         }
     }
@@ -463,8 +568,7 @@ function searchForTickets () {
           $SolvedT | ForEach-Object {
              $temp = ($_.Split("\") | Select-Object -Last 1).ToString().Replace(".json", "")
              $json = Get-Content -Path $_ | ConvertFrom-Json
-             scanJsonFiles -switch 1 -temp $temp -json $json
-             
+             scanJsonFiles -switch 1 -temp $temp -json $json            
           }
        }
     }
@@ -491,6 +595,8 @@ function searchForTickets () {
           }
        }
     }
+
+    closeProgressBar -ProgressBar $ProgressBar -Show $show 
 }
 searchForTickets
 
@@ -1392,10 +1498,11 @@ function autosaveSettings () {
     $item | Add-Member -type NoteProperty -Name 'Prio3R' -Value $Prio3R.IsChecked
     $item | Add-Member -type NoteProperty -Name 'SolvedR' -Value $SolvedR.IsChecked
     $item | Add-Member -type NoteProperty -Name 'NotSolvedR' -Value $NotSolvedR.IsChecked
-    $item | Add-Member -type NoteProperty -Name 'WithOutOwner' -Value $WithOutOwnerR.IsChecked
+    $item | Add-Member -type NoteProperty -Name 'WithOutOwner' -Value $showAllTicketsR.IsChecked
     $item | Add-Member -type NoteProperty -Name 'automove' -Value $Global:autoMove
     $item | Add-Member -type NoteProperty -Name 'user' -Value $Global:ticketOwner
-         
+    $item | Add-Member -type NoteProperty -Name 'showWithNoOwners' -Value $showWithNoOwners.IsChecked
+
     $item | ConvertTo-Json | Out-File -FilePath "$Global:Settings\Userprofile.json"
 }
 
@@ -1514,8 +1621,6 @@ $inputXML = @"
 $Timer1 = New-Object System.Windows.Threading.DispatcherTimer
 $Timer1.Interval = [TimeSpan]::FromSeconds(2)
 
-
-
 $Timer1.add_Tick({
 
     if ( !$notsolvedR.IsChecked -or $solvedR.IsChecked ) {
@@ -1611,14 +1716,26 @@ $Timer2.Start()
 $settingsM.add_Click({ settings })
 $exitM.add_Click({ $MainWindow.Close() })
 
-$newR.Add_Click({ searchForTickets })
-$solvedR.Add_Click({ searchForTickets })
-$notsolvedR.Add_Click({ searchForTickets })
-$prio1R.Add_Click({ searchForTickets })
-$prio2R.Add_Click({ searchForTickets })
-$prio3R.Add_Click({ searchForTickets })
-$pauseR.Add_Click({ searchForTickets })
-$withOutOwnerR.Add_Click({ searchForTickets })
+$newR.Add_Click({ searchForTickets -show $false })
+$solvedR.Add_Click({ searchForTickets -show $true })
+$notsolvedR.Add_Click({ searchForTickets -show $true })
+$prio1R.Add_Click({ searchForTickets -show $true })
+$prio2R.Add_Click({ searchForTickets -show $true })
+$prio3R.Add_Click({ searchForTickets -show $true })
+$pauseR.Add_Click({ searchForTickets -show $true })
+$showWithNoOwners.Add_Click({ searchForTickets })
+
+$Global:noOwnersWasChecked = $false  
+$showAllTicketsR.Add_Click({ 
+    searchForTickets 
+    if ( $Global:noOwnersWasChecked -and !$showWithNoOwners.IsChecked ) {
+        $Global:noOwnersWasChecked = $false
+        $showWithNoOwners.IsChecked = $true
+    } else {
+        $Global:noOwnersWasChecked = $showWithNoOwners.IsChecked
+        $showWithNoOwners.IsChecked = $false
+    }
+})  
 
 $newTicketB.Add_Click({ newTicket })
 $renameTicketB.Add_Click({ renameTicket })
