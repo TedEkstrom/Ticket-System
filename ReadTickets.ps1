@@ -17,6 +17,9 @@ $Global:Path = ""
 
 $Global:ticketOwner = ""
 $Global:autoMove = $true
+$Global:first = 8
+$Global:second = 4
+$Global:third = 0
  
 $newTickets = "$Global:Path\new\"
 $solvedTickets = "$Global:Path\solved\"
@@ -87,7 +90,6 @@ $inputXML = @"
             <!-- Meny -->
             <Menu DockPanel.Dock="Top">
                 <MenuItem Header="File">
-                    <MenuItem Header="📂 Select ticket path"/>
                     <MenuItem Name="exitM" Header="❌ Exit"/>
                 </MenuItem>
                 <MenuItem Header="Settings">
@@ -317,9 +319,7 @@ catch {
 ####################################################
 ## Load settings
 function loadAutosaveSettings () {
-
     $AutoSave = Get-Content -Path "$Global:Settings\userprofile.json" | ConvertFrom-Json
-    
     $NewR.IsChecked = $AutoSave.NewR
     $Prio1R.IsChecked = $AutoSave.Prio1R
     $Prio2R.IsChecked = $AutoSave.Prio2R
@@ -330,6 +330,15 @@ function loadAutosaveSettings () {
     $Global:autoMove = $AutoSave.automove
     $Global:ticketOwner = $AutoSave.user
     $showWithNoOwners.IsChecked = $AutoSave.showWithNoOwners
+    $Global:first = $AutoSave.first
+    $Global:second = $AutoSave.second
+    $Global:third = $AutoSave.third
+
+    if ( [string]::IsNullOrEmpty($Global:first) -or [string]::IsNullOrEmpty($Global:second) -or [string]::IsNullOrEmpty($Global:third) ) {
+        $Global:first = 8
+        $Global:second = 4
+        $Global:third = 0
+    }
 } 
 loadAutosaveSettings
 
@@ -496,10 +505,13 @@ function searchForTickets ($show) {
                         
                         scanJsonFiles -switch 1 -temp $temp -json $json
                     }
-                } elseif ( !$showAllTicketsR.IsChecked ) {  
+                } elseif ( !$showAllTicketsR.IsChecked ) {
                     
                     if ( ![string]::IsNullOrEmpty($containsTicketOwner) ) { 
-                        scanJsonFiles -switch 1 -temp $temp -json $json
+                        
+                        if ( $containsTicketOwner -eq $Global:ticketOwner ) {
+                            scanJsonFiles -switch 1 -temp $temp -json $json
+                        }
                     }
                 }           
             }
@@ -527,7 +539,9 @@ function searchForTickets ($show) {
                 } elseif ( !$showAllTicketsR.IsChecked ) {  
                     
                     if ( ![string]::IsNullOrEmpty($containsTicketOwner) ) { 
-                        scanJsonFiles -switch 1 -temp $temp -json $json
+                        if ( $containsTicketOwner -eq $Global:ticketOwner ) {
+                            scanJsonFiles -switch 1 -temp $temp -json $json
+                        }
                     }
                 }           
             }
@@ -555,7 +569,9 @@ function searchForTickets ($show) {
                 } elseif ( !$showAllTicketsR.IsChecked ) {  
                     
                     if ( ![string]::IsNullOrEmpty($containsTicketOwner) ) { 
-                        scanJsonFiles -switch 1 -temp $temp -json $json
+                        if ( $containsTicketOwner -eq $Global:ticketOwner ) {
+                            scanJsonFiles -switch 1 -temp $temp -json $json
+                        }
                     }
                 }           
             }
@@ -1501,7 +1517,11 @@ function autosaveSettings () {
     $item | Add-Member -type NoteProperty -Name 'WithOutOwner' -Value $showAllTicketsR.IsChecked
     $item | Add-Member -type NoteProperty -Name 'automove' -Value $Global:autoMove
     $item | Add-Member -type NoteProperty -Name 'user' -Value $Global:ticketOwner
-    $item | Add-Member -type NoteProperty -Name 'showWithNoOwners' -Value $showWithNoOwners.IsChecked
+    $item | Add-Member -type NoteProperty -Name 'showWithNoOwners' -Value $showWithNoOwners.IsChecked    
+    $item | Add-Member -type NoteProperty -Name 'first' -Value $Global:first
+    $item | Add-Member -type NoteProperty -Name 'second' -Value $Global:second
+    $item | Add-Member -type NoteProperty -Name 'third' -Value $Global:third
+
 
     $item | ConvertTo-Json | Out-File -FilePath "$Global:Settings\Userprofile.json"
 }
@@ -1516,7 +1536,7 @@ $inputXML = @"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:SelectUser"
         mc:Ignorable="d"
-        Title="Settings" Height="260" Width="583">
+        Title="Settings" Height="300" Width="583">
     <Grid>
         <Border Background="White" CornerRadius="10" Padding="10" Margin="10">
             <StackPanel>
@@ -1536,6 +1556,16 @@ $inputXML = @"
                 <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
                     <TextBlock Text="Move ticket automatic:" FontSize="14" FontWeight="Bold"  />
                     <CheckBox Name="automoveCB" Width="200" Margin="10,3,0,0" />
+                </StackPanel>
+
+                <TextBlock Text="Determine when a color should appear in the deadline." />
+                <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                    <TextBlock Text="First:" FontSize="14" FontWeight="Bold" />
+                    <TextBox Name="firstTB" TextWrapping="Wrap" Text="" Width="30" Margin="10,0,10,0" Background="#FFB1E7F3" />
+                    <TextBlock Text="Second:" FontSize="14" FontWeight="Bold" />
+                    <TextBox Name="secondTB" TextWrapping="Wrap" Text="" Width="30" Margin="10,0,10,0"  Background="#FFF0F3B1" />
+                    <TextBlock Text="Third:" FontSize="14" FontWeight="Bold" />
+                    <TextBox Name="thirdTB" TextWrapping="Wrap" Text="" Width="30" Margin="10,0,0,0"  Background="#FFF3B1B1" />
                 </StackPanel>
 
                 <!-- Kontrollknappar -->
@@ -1562,6 +1592,9 @@ $inputXML = @"
         $saveB = $Window.FindName("saveB")
         $closeB = $Window.FindName("closeB")
         $automoveCB = $Window.FindName("automoveCB")
+        $firstTB = $Window.FindName("firstTB")
+        $secondTB = $Window.FindName("secondTB")
+        $thirdTB = $Window.FindName("thirdTB")
     }
     catch {
         Write-Warning $_.Exception
@@ -1601,15 +1634,27 @@ $inputXML = @"
     $pathT.Add_GotFocus({ $pathT.Text = "" })
     $Window.Add_MouseDown({ $pathT.Text = $temp })
 
-    $saveB.Add_Click({
+    $firstTB.Text = $Global:first
+    $secondTB.Text = $Global:second
+    $thirdTB.text = $Global:third
 
-        $Global:ticketOwner = $selectUserCB.SelectedValue
-        $ticketOwnerL.Text = "User: $Global:ticketOwner"
-        $Global:Path = $pathT.Text
-        $Global:autoMove = $automoveCB.IsChecked
-        autosaveSettings
-        searchForTickets
-        $Window.Hide()
+    $saveB.Add_Click({
+ 
+        if ( [Int]$firstTB.Text -gt [Int]$secondTB.Text -and [Int]$secondTB.Text -gt [Int]$thirdTB.Text ) {
+            $Global:ticketOwner = $selectUserCB.SelectedValue
+            $ticketOwnerL.Text = "User: $Global:ticketOwner"
+            $Global:Path = $pathT.Text
+            $Global:autoMove = $automoveCB.IsChecked
+            $Global:first = $firstTB.Text 
+            $Global:second = $secondTB.Text
+            $Global:third = $thirdTB.Text
+            autosaveSettings
+            searchForTickets
+            $Window.Hide()
+        } else {
+            
+            Write-Host "The first must be larger than the second and the second must be larger than the third."
+        }
     })
 
     $closeB.Add_Click({$Window.Hide()})
@@ -1630,21 +1675,21 @@ $Timer1.add_Tick({
                 $deadline = Get-Date $item.Deadline -ErrorAction SilentlyContinue
                 $limit = $($deadline - (Get-Date)).days
                 
-                if ( $limit -le 8 -and $limit -ge 4 ) {
+                if ( $limit -le $Global:first -and $limit -ge $Global:second ) {
                     $container = $tickets.ItemContainerGenerator.ContainerFromItem($item)
                     if ( $container -ne $null ) {                        
                         $color = [System.Windows.Media.Color]::FromRgb(177, 231, 243) # Blue  
                         $brush = New-Object System.Windows.Media.SolidColorBrush($color)
                         $container.Background = $brush
                     }
-                } elseif ( $limit -le 4 -and $limit -ge 0 ) {
+                } elseif ( $limit -le $Global:second -and $limit -ge $Global:third ) {
                     $container = $tickets.ItemContainerGenerator.ContainerFromItem($item)
                     if ( $container -ne $null ) { 
                         $color = [System.Windows.Media.Color]::FromRgb(240, 243, 177) # Yellow
                         $brush = New-Object System.Windows.Media.SolidColorBrush($color)
                         $container.Background = $brush
                     }
-                } elseif ( $limit -le 0  ) {
+                } elseif ( $limit -le $Global:third  ) {
                     $container = $tickets.ItemContainerGenerator.ContainerFromItem($item)
                     if ( $container -ne $null ) { 
                         $color = [System.Windows.Media.Color]::FromRgb(243, 177, 177) # Red                     
@@ -1692,7 +1737,7 @@ $Timer2.add_Tick({
                     $deadline = Get-Date $json.deadLine -ErrorAction SilentlyContinue
                     $limit = $($deadline - (Get-Date)).days
 
-                    if ( $limit -le 8 -and $limit -ge 0 -or $limit -le 0 ) {
+                    if ( $limit -le $Global:first -and $limit -ge 0 -or $limit -le 0 ) {
                     
                         if ( $json.prio -eq "Prio 1" ) { 
                            Move-Item -Path $_ -Destination $prio1    
