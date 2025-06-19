@@ -1000,6 +1000,7 @@ $inputXML = @"
         $item | Add-Member -type NoteProperty -Name 'Update' -Value $allUpdatesT.Text
         $item | Add-Member -type NoteProperty -Name 'Username' -Value $global:LoadedTicket.Username
         $item | Add-Member -type NoteProperty -Name 'Prio' -Value $global:LoadedTicket.Prio
+        $item | Add-Member -type NoteProperty -Name 'ticketOwner' -Value $global:LoadedTicket.ticketOwner
 
         if ( !($statusCB.SelectionBoxItem -eq "Not set") ) {
             $item | Add-Member -type NoteProperty -Name 'Status' -Value $statusCB.SelectionBoxItem     
@@ -1057,6 +1058,8 @@ $inputXML = @"
             $item | Add-Member -type NoteProperty -Name 'Prio' -Value $global:LoadedTicket.Prio
             $item | Add-Member -type NoteProperty -Name 'Status' -Value $global:LoadedTicket.Status
             $item | Add-Member -type NoteProperty -Name 'deadLine' -Value $global:loadedtickets.deadLine
+            $item | Add-Member -type NoteProperty -Name 'ticketOwner' -Value $global:LoadedTicket.ticketOwner
+
             $global:loadedticket =  $item
 
             saveChanges
