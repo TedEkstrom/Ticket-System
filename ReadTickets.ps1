@@ -807,7 +807,7 @@ $inputXML = @"
         if ( $allUpdatesT.Text -eq "" ) {
             $Global:comment = $allUpdatesT.Text + $commentT.Text + "`r--------------------------------------------------------------------" 
         } else {
-            $Global:comment = $allUpdatesT.Text + "`r" + $commentT.Text + "`r--------------------------------------------------------------------`r"
+            $Global:comment = $allUpdatesT.Text + "`r" + $commentT.Text + "`r--------------------------------------------------------------------"
         }
     
         $Window.hide()
@@ -1064,9 +1064,11 @@ $inputXML = @"
     })
     
     $solvedB.Add_Click({ 
+        addComment
+        $global:LoadedTicket.Update = $Global:comment        
         $global:LoadedTicket.status = $statusCB.SelectionBoxItem
         $global:loadedticket.Update += $updateT.Text + "`r`n-------------------------------- Solved ----------------------------`r`n"
-        $global:loadedticket.Update += $updateT.Text + "`r`n--------------------------------------------------------------------`r`n"
+        $global:loadedticket.Update += $updateT.Text + "`r`n--------------------------------------------------------------------`r`n"        
         saveChanges
         solvedTicket
         searchForTickets
@@ -1076,7 +1078,9 @@ $inputXML = @"
     $closeB.Add_Click({$Window.Hide()})
 
     $notSolvableB.Add_Click({
-    $global:LoadedTicket.status = $statusCB.SelectionBoxItem
+        addComment
+        $global:LoadedTicket.Update = $Global:comment
+        $global:LoadedTicket.status = $statusCB.SelectionBoxItem
         $global:loadedticket.Update += $updateT.Text + "`r`n----------------------- Not able to be Solved ----------------------`r`n"
         $global:loadedticket.Update += $updateT.Text + "`r`n--------------------------------------------------------------------`r`n"
         saveChanges
