@@ -20,15 +20,6 @@ $Global:autoMove = $true
 $Global:first = 8
 $Global:second = 4
 $Global:third = 0
- 
-$newTickets = "$Global:Path\new\"
-$solvedTickets = "$Global:Path\solved\"
-$NotsolvedTickets = "$Global:Path\notsolved\"
-$deletedTickets = "$Global:Path\Deleted\"
-$prio1 = "$Global:Path\prio1\"
-$prio2 = "$Global:Path\prio2\"
-$prio3 = "$Global:Path\prio3\"
-$paus = "$Global:Path\pause\"
 
 ####################################################
 
@@ -52,30 +43,6 @@ if ( !$(Test-Path -Path "$Global:Settings\Userprofile.json" -ErrorAction Silentl
     $item | Add-Member -type NoteProperty -Name 'showWithNoOwners' -Value $false
         
     $item | ConvertTo-Json | Out-File -FilePath "$Global:Settings\Userprofile.json"
-}
-
-## Loading profile
-$Global:Path = (Get-Content -Path "$Global:Settings\userprofile.json" | ConvertFrom-Json).TicketPath
- 
-$newTickets = "$Global:Path\new\"
-$solvedTickets = "$Global:Path\solved\"
-$NotsolvedTickets = "$Global:Path\notsolved\"
-$deletedTickets = "$Global:Path\Deleted\"
-$prio1 = "$Global:Path\prio1\"
-$prio2 = "$Global:Path\prio2\"
-$prio3 = "$Global:Path\prio3\"
-$pause = "$Global:Path\pause\"
-
-if ( !($Global:Path -eq $null) -and !(Test-Path -Path "$Global:Path\new" -ErrorAction SilentlyContinue ) ) {
-    
-    [void](New-Item -Path $newTickets -ItemType Directory -ErrorAction SilentlyContinue)
-    [void](New-Item -Path $solvedTickets -ItemType Directory -ErrorAction SilentlyContinue)
-    [void](New-Item -Path $NotsolvedTickets -ItemType Directory -ErrorAction SilentlyContinue)
-    [void](New-Item -Path $deletedTickets -ItemType Directory -ErrorAction SilentlyContinue)
-    [void](New-Item -Path $prio1 -ItemType Directory -ErrorAction SilentlyContinue)
-    [void](New-Item -Path $prio2 -ItemType Directory -ErrorAction SilentlyContinue)
-    [void](New-Item -Path $prio3 -ItemType Directory -ErrorAction SilentlyContinue)
-    [void](New-Item -Path $pause -ItemType Directory -ErrorAction SilentlyContinue)
 }
  
 ####################################################
@@ -289,12 +256,12 @@ try {
     $ticketOwnerL = $MainWindow.FindName("ticketOwnerL")
     $tickets = $MainWindow.FindName("ticketListViewT")
     $newR = $MainWindow.FindName("newTicketsR")
-    $prio1R = $MainWindow.FindName("prio1R")
-    $prio2R = $MainWindow.FindName("prio2R")
-    $prio3R = $MainWindow.FindName("prio3R")
+    $Global:prio1R = $MainWindow.FindName("prio1R")
+    $Global:prio2R = $MainWindow.FindName("prio2R")
+    $Global:prio3R = $MainWindow.FindName("prio3R")
     $notsolvedR = $MainWindow.FindName("notSolvedR") #< ändra till $notSolvedR
     $solvedR = $MainWindow.FindName("solvedR") #< ändra till $solvedR
-    $pauseR = $MainWindow.FindName("pausedR")
+    $Global:pauseR = $MainWindow.FindName("pausedR")
     $showAllTicketsR = $MainWindow.FindName("showAllTicketsR")
     $showWithNoOwners = $MainWindow.FindName("showWithNoOwners")
 
@@ -305,7 +272,7 @@ try {
     $choosePrio1B = $MainWindow.FindName("choosePrio1B")
     $choosePrio2B = $MainWindow.FindName("choosePrio2B")
     $choosePrio3B = $MainWindow.FindName("choosePrio3B")
-    $pauseTicketB = $MainWindow.FindName("pauseTicketB")
+    $Global:pauseTicketB = $MainWindow.FindName("pauseTicketB")
     $deleteTicketB = $MainWindow.FindName("deleteTicketB")
     $searchTB = $MainWindow.FindName("searchTB")
     $searchB = $MainWindow.FindName("searchB")
@@ -321,9 +288,9 @@ catch {
 function loadAutosaveSettings () {
     $AutoSave = Get-Content -Path "$Global:Settings\userprofile.json" | ConvertFrom-Json
     $NewR.IsChecked = $AutoSave.NewR
-    $Prio1R.IsChecked = $AutoSave.Prio1R
-    $Prio2R.IsChecked = $AutoSave.Prio2R
-    $Prio3R.IsChecked = $AutoSave.Prio3R
+    $Global:prio1R.IsChecked = $AutoSave.Prio1R
+    $Global:prio2R.IsChecked = $AutoSave.Prio2R
+    $Global:prio3R.IsChecked = $AutoSave.Prio3R
     $SolvedR.IsChecked = $AutoSave.SolvedR
     $NotSolvedR.IsChecked = $AutoSave.NotSolvedR
     $showAllTicketsR.IsChecked = $AutoSave.WithOutOwner
@@ -333,11 +300,38 @@ function loadAutosaveSettings () {
     $Global:first = $AutoSave.first
     $Global:second = $AutoSave.second
     $Global:third = $AutoSave.third
+    $Global:Path = $AutoSave.ticketPath
 
     if ( [string]::IsNullOrEmpty($Global:first) -or [string]::IsNullOrEmpty($Global:second) -or [string]::IsNullOrEmpty($Global:third) ) {
         $Global:first = 8
         $Global:second = 4
         $Global:third = 0
+    }
+
+    $Global:newTickets = "$Global:Path\new\"
+    $Global:solvedTickets = "$Global:Path\solved\"
+    $NotsolvedTickets = "$Global:Path\notsolved\"
+    $Global:deletedTickets = "$Global:Path\Deleted\"
+    $Global:prio1 = "$Global:Path\prio1\"
+    $Global:prio2 = "$Global:Path\prio2\"
+    $Global:prio3 = "$Global:Path\prio3\"
+    $Global:pause = "$Global:Path\pause\"
+
+    
+    if ( !($Global:Path -eq $null) -and !(Test-Path -Path "$Global:Path\new" -ErrorAction SilentlyContinue ) ) {
+    
+        [void](New-Item -Path $Global:newTickets -ItemType Directory -ErrorAction SilentlyContinue)
+        [void](New-Item -Path $Global:solvedTickets -ItemType Directory -ErrorAction SilentlyContinue)
+        [void](New-Item -Path $NotsolvedTickets -ItemType Directory -ErrorAction SilentlyContinue)
+        [void](New-Item -Path $Global:deletedTickets -ItemType Directory -ErrorAction SilentlyContinue)
+        [void](New-Item -Path $Global:prio1 -ItemType Directory -ErrorAction SilentlyContinue)
+        [void](New-Item -Path $Global:prio2 -ItemType Directory -ErrorAction SilentlyContinue)
+        [void](New-Item -Path $Global:prio3 -ItemType Directory -ErrorAction SilentlyContinue)
+        [void](New-Item -Path $Global:pause -ItemType Directory -ErrorAction SilentlyContinue)
+      
+        $item = New-Object PSObject
+        $item | Add-Member -type NoteProperty -Name 'ticketOwners' -Value 'User1'       
+        $item | ConvertTo-Json | Out-File -FilePath "$Global:Path\owners.json"
     }
 } 
 loadAutosaveSettings
@@ -465,154 +459,168 @@ function scanJsonFiles ( $switch, $temp, $json) {
     }
 }
 
-function searchForTickets ($show) {
+$errorSet = $false
 
-    $tickets.Items.Clear()
-    $loadedtickets.Clear()
+function searchForTickets ($show) { 
+    if ( ![string]::IsNullOrEmpty($Global:Path) ) {
 
-    $ProgressBar = showProgressBar -show $show
+        if ( (Test-Path -Path $Global:Path -ErrorAction SilentlyContinue) -and !$errorSet ) {
+  
+            $tickets.Items.Clear()
+            $loadedtickets.Clear()
+
+            $ProgressBar = showProgressBar -show $show
  
-    if ( $NewR.IsChecked  ) {
+            if ( $NewR.IsChecked  ) {
      
-       $NewT = (Get-ChildItem -Path $newTickets -File).FullName
+               $NewT = (Get-ChildItem -Path $Global:newTickets -File).FullName
 
-       if ( $NewT ) {
-          $NewT | ForEach-Object {
-             $temp = ($_.Split("\") | Select-Object -Last 1).ToString().Replace(".json", "")
-             $json = Get-Content -Path $_ | ConvertFrom-Json
-             scanJsonFiles -switch 0 -temp $temp -json $json
-          }
-       }
-    }
+               if ( $NewT ) {
+                  $NewT | ForEach-Object {
+                     $temp = ($_.Split("\") | Select-Object -Last 1).ToString().Replace(".json", "")
+                     $json = Get-Content -Path $_ | ConvertFrom-Json
+                     scanJsonFiles -switch 0 -temp $temp -json $json
+                  }
+               }
+            }
 
-    if ( $Prio1R.IsChecked ) {
+            if ( $Global:prio1R.IsChecked ) {
        
-       $Prio1T = (Get-ChildItem -Path $prio1 -File).FullName
+               $Global:prio1T = (Get-ChildItem -Path $Global:prio1 -File).FullName
 
-       if ( $Prio1T ) {  
-          $Prio1T | ForEach-Object {
-                $containsTicketOwner = (Get-Content -Path $_ | ConvertFrom-Json).ticketOwner
-                $temp = ($_.Split("\") | Select-Object -Last 1).ToString().Replace(".json", "")
-                $json = Get-Content -Path $_ | ConvertFrom-Json
+               if ( $Global:prio1T ) {  
+                  $Global:prio1T | ForEach-Object {
+                        $containsTicketOwner = (Get-Content -Path $_ | ConvertFrom-Json).ticketOwner
+                        $temp = ($_.Split("\") | Select-Object -Last 1).ToString().Replace(".json", "")
+                        $json = Get-Content -Path $_ | ConvertFrom-Json
                 
-                if ( $showAllTicketsR.IsChecked ) {
+                        if ( $showAllTicketsR.IsChecked ) {
 
-                    scanJsonFiles -switch 1 -temp $temp -json $json
-
-                } elseif ( $showWithNoOwners.IsChecked ) {
-                    
-                    if ( [string]::IsNullOrEmpty($containsTicketOwner) ) { 
-                        
-                        scanJsonFiles -switch 1 -temp $temp -json $json
-                    }
-                } elseif ( !$showAllTicketsR.IsChecked ) {
-                    
-                    if ( ![string]::IsNullOrEmpty($containsTicketOwner) ) { 
-                        
-                        if ( $containsTicketOwner -eq $Global:ticketOwner ) {
                             scanJsonFiles -switch 1 -temp $temp -json $json
-                        }
+
+                        } elseif ( $showWithNoOwners.IsChecked ) {
+                    
+                            if ( [string]::IsNullOrEmpty($containsTicketOwner) ) { 
+                        
+                                scanJsonFiles -switch 1 -temp $temp -json $json
+                            }
+                        } elseif ( !$showAllTicketsR.IsChecked ) {
+                    
+                            if ( ![string]::IsNullOrEmpty($containsTicketOwner) ) { 
+                        
+                                if ( $containsTicketOwner -eq $Global:ticketOwner ) {
+                                    scanJsonFiles -switch 1 -temp $temp -json $json
+                                }
+                            }
+                        }           
                     }
-                }           
+                }
             }
-        }
-    }
     
-    if ( $Prio2R.IsChecked  ) {
-        $Prio2T = (Get-ChildItem -Path $prio2 -File).FullName
-        if ( $Prio2T ) {  
-            $Prio2T | ForEach-Object {
-                $containsTicketOwner = (Get-Content -Path $_ | ConvertFrom-Json).ticketOwner
-                $temp = ($_.Split("\") | Select-Object -Last 1).ToString().Replace(".json", "")
-                $json = Get-Content -Path $_ | ConvertFrom-Json
+            if ( $Global:prio2R.IsChecked  ) {
+                $Global:prio2T = (Get-ChildItem -Path $Global:prio2 -File).FullName
+                if ( $Global:prio2T ) {  
+                    $Global:prio2T | ForEach-Object {
+                        $containsTicketOwner = (Get-Content -Path $_ | ConvertFrom-Json).ticketOwner
+                        $temp = ($_.Split("\") | Select-Object -Last 1).ToString().Replace(".json", "")
+                        $json = Get-Content -Path $_ | ConvertFrom-Json
                 
-                if ( $showAllTicketsR.IsChecked ) {
+                        if ( $showAllTicketsR.IsChecked ) {
 
-                    scanJsonFiles -switch 1 -temp $temp -json $json
-
-                } elseif ( $showWithNoOwners.IsChecked ) {
-                    
-                    if ( [string]::IsNullOrEmpty($containsTicketOwner) ) { 
-                        
-                        scanJsonFiles -switch 1 -temp $temp -json $json
-                    }
-                } elseif ( !$showAllTicketsR.IsChecked ) {  
-                    
-                    if ( ![string]::IsNullOrEmpty($containsTicketOwner) ) { 
-                        if ( $containsTicketOwner -eq $Global:ticketOwner ) {
                             scanJsonFiles -switch 1 -temp $temp -json $json
-                        }
-                    }
-                }           
-            }
-        }
-    }
 
-    if ( $Prio3R.IsChecked  ) {
-        $Prio3T = (Get-ChildItem -Path $prio3 -File).FullName       
-        if ( $Prio3T ) {  
-            $Prio3T | ForEach-Object {
-                $containsTicketOwner = (Get-Content -Path $_ | ConvertFrom-Json).ticketOwner
-                $temp = ($_.Split("\") | Select-Object -Last 1).ToString().Replace(".json", "")
-                $json = Get-Content -Path $_ | ConvertFrom-Json
+                        } elseif ( $showWithNoOwners.IsChecked ) {
+                    
+                            if ( [string]::IsNullOrEmpty($containsTicketOwner) ) { 
+                        
+                                scanJsonFiles -switch 1 -temp $temp -json $json
+                            }
+                        } elseif ( !$showAllTicketsR.IsChecked ) {  
+                    
+                            if ( ![string]::IsNullOrEmpty($containsTicketOwner) ) { 
+                                if ( $containsTicketOwner -eq $Global:ticketOwner ) {
+                                    scanJsonFiles -switch 1 -temp $temp -json $json
+                                }
+                            }
+                        }           
+                    }
+                }
+            }
+
+            if ( $Global:prio3R.IsChecked  ) {
+                $Global:prio3T = (Get-ChildItem -Path $Global:prio3 -File).FullName       
+                if ( $Global:prio3T ) {  
+                    $Global:prio3T | ForEach-Object {
+                        $containsTicketOwner = (Get-Content -Path $_ | ConvertFrom-Json).ticketOwner
+                        $temp = ($_.Split("\") | Select-Object -Last 1).ToString().Replace(".json", "")
+                        $json = Get-Content -Path $_ | ConvertFrom-Json
                 
-                if ( $showAllTicketsR.IsChecked ) {
+                        if ( $showAllTicketsR.IsChecked ) {
 
-                    scanJsonFiles -switch 1 -temp $temp -json $json
-
-                } elseif ( $showWithNoOwners.IsChecked ) {
-                    
-                    if ( [string]::IsNullOrEmpty($containsTicketOwner) ) { 
-                        
-                        scanJsonFiles -switch 1 -temp $temp -json $json
-                    }
-                } elseif ( !$showAllTicketsR.IsChecked ) {  
-                    
-                    if ( ![string]::IsNullOrEmpty($containsTicketOwner) ) { 
-                        if ( $containsTicketOwner -eq $Global:ticketOwner ) {
                             scanJsonFiles -switch 1 -temp $temp -json $json
-                        }
+
+                        } elseif ( $showWithNoOwners.IsChecked ) {
+                    
+                            if ( [string]::IsNullOrEmpty($containsTicketOwner) ) { 
+                        
+                                scanJsonFiles -switch 1 -temp $temp -json $json
+                            }
+                        } elseif ( !$showAllTicketsR.IsChecked ) {  
+                    
+                            if ( ![string]::IsNullOrEmpty($containsTicketOwner) ) { 
+                                if ( $containsTicketOwner -eq $Global:ticketOwner ) {
+                                    scanJsonFiles -switch 1 -temp $temp -json $json
+                                }
+                            }
+                        }           
                     }
-                }           
+                }
             }
-        }
-    }
 
-    if ( $SolvedR.IsChecked  ) {
-       $SolvedT = (Get-ChildItem -Path $solvedTickets -File).FullName
-       if ( $SolvedT ) {  
-          $SolvedT | ForEach-Object {
-             $temp = ($_.Split("\") | Select-Object -Last 1).ToString().Replace(".json", "")
-             $json = Get-Content -Path $_ | ConvertFrom-Json
-             scanJsonFiles -switch 1 -temp $temp -json $json            
-          }
-       }
-    }
+            if ( $SolvedR.IsChecked  ) {
+               $SolvedT = (Get-ChildItem -Path $Global:solvedTickets -File).FullName
+               if ( $SolvedT ) {  
+                  $SolvedT | ForEach-Object {
+                     $temp = ($_.Split("\") | Select-Object -Last 1).ToString().Replace(".json", "")
+                     $json = Get-Content -Path $_ | ConvertFrom-Json
+                     scanJsonFiles -switch 1 -temp $temp -json $json            
+                  }
+               }
+            }
 
-    if ( $notSolvedR.IsChecked  ) {
-       $NotSolvedT = (Get-ChildItem -Path $NotSolvedTickets -File).FullName
-       if ( $NotSolvedT ) {  
-          $NotSolvedT | ForEach-Object {
-             $temp = ($_.Split("\") | Select-Object -Last 1).ToString().Replace(".json", "")
-             $json = Get-Content -Path $_ | ConvertFrom-Json
-             scanJsonFiles -switch 1 -temp $temp -json $json 
-          }
-       }
-    }
+            if ( $notSolvedR.IsChecked  ) {
+               $NotSolvedT = (Get-ChildItem -Path $NotSolvedTickets -File).FullName
+               if ( $NotSolvedT ) {  
+                  $NotSolvedT | ForEach-Object {
+                     $temp = ($_.Split("\") | Select-Object -Last 1).ToString().Replace(".json", "")
+                     $json = Get-Content -Path $_ | ConvertFrom-Json
+                     scanJsonFiles -switch 1 -temp $temp -json $json 
+                  }
+               }
+            }
     
-    if ( $pauseR.IsChecked  ) {
-       $pauseT = (Get-ChildItem -Path $pause -File).FullName
-       if ( $pauseT ) {  
-          $pauseT | ForEach-Object {
-             $temp = ($_.Split("\") | Select-Object -Last 1).ToString().Replace(".json", "")
-             $json = Get-Content -Path $_ | ConvertFrom-Json
-             scanJsonFiles -switch 1 -temp $temp -json $json
+            if ( $Global:pauseR.IsChecked  ) {
+               $Global:pauseT = (Get-ChildItem -Path $Global:pause -File).FullName
+               if ( $Global:pauseT ) {  
+                  $Global:pauseT | ForEach-Object {
+                     $temp = ($_.Split("\") | Select-Object -Last 1).ToString().Replace(".json", "")
+                     $json = Get-Content -Path $_ | ConvertFrom-Json
+                     scanJsonFiles -switch 1 -temp $temp -json $json
              
-          }
-       }
-    }
+                  }
+               }
+            }
 
-    closeProgressBar -ProgressBar $ProgressBar -Show $show 
+            closeProgressBar -ProgressBar $ProgressBar -Show $show 
+        } else {
+        
+            Write-Warning $Error
+            $errorSet = $true
+        }
+    } else {
+        
+        Write-Warning "The path is empty, which it must not be."
+    }
 }
 searchForTickets
 
@@ -629,7 +637,7 @@ function solvedTicket () {
     
     if ( $Tickets.SelectedItems.ticketName.Length -gt 0 ) { 
         
-        Move-Item -Path $loadedtickets[$global:LastSelectTicket.ticketName] -Destination "$solvedTickets$($global:LastSelectTicket.ticketName.Replace(' ',''))_$(Get-Date -Format 'yyyyMMdd_ss').json"
+        Move-Item -Path $loadedtickets[$global:LastSelectTicket.ticketName] -Destination "$Global:solvedTickets$($global:LastSelectTicket.ticketName.Replace(' ',''))_$(Get-Date -Format 'yyyyMMdd_ss').json"
         searchForTickets
     }
 }
@@ -649,7 +657,7 @@ function prio1 () {
     if ( $Tickets.SelectedItems.ticketName.Length -gt 0 ) {       
         $global:loadedticket.Prio = "Prio 1"
         saveChanges
-        Move-Item -Path $loadedtickets[$global:LastSelectTicket.ticketName] -Destination $prio1        
+        Move-Item -Path $loadedtickets[$global:LastSelectTicket.ticketName] -Destination $Global:prio1        
         searchForTickets
     }
 }
@@ -659,7 +667,7 @@ function prio2 () {
     if ( $Tickets.SelectedItems.ticketName.Length -gt 0 ) {       
         $global:loadedticket.Prio = "Prio 2"
         saveChanges
-        Move-Item -Path $loadedtickets[$global:LastSelectTicket.ticketName] -Destination $prio2  
+        Move-Item -Path $loadedtickets[$global:LastSelectTicket.ticketName] -Destination $Global:prio2  
         searchForTickets
     }
 }
@@ -669,7 +677,7 @@ function prio3 () {
     if ( $Tickets.SelectedItems.ticketName.Length -gt 0  ) {        
         $global:loadedticket.Prio = "Prio 3"
         saveChanges
-        Move-Item -Path $loadedtickets[$global:LastSelectTicket.ticketName] -Destination $prio3
+        Move-Item -Path $loadedtickets[$global:LastSelectTicket.ticketName] -Destination $Global:prio3
         searchForTickets
     }
 }
@@ -677,7 +685,7 @@ function prio3 () {
 function pause () {
     
     if ( $Tickets.SelectedItems.ticketName.Length -gt 0  ) {
-        Move-Item -Path $loadedtickets[$global:LastSelectTicket.ticketName] -Destination $pause
+        Move-Item -Path $loadedtickets[$global:LastSelectTicket.ticketName] -Destination $Global:pause
         searchForTickets
     }
 }
@@ -685,7 +693,7 @@ function pause () {
 function deleteTicket () {
 
     if ( $Tickets.SelectedItems.ticketName.Length -gt 0  ) {      
-        Move-Item -Path $loadedtickets[$global:LastSelectTicket.ticketName] -Destination "$deletedTickets$($global:LastSelectTicket.ticketName.Replace(' ',''))_$(Get-Date -Format 'yyyyMMdd_ss').json"
+        Move-Item -Path $loadedtickets[$global:LastSelectTicket.ticketName] -Destination "$Global:deletedTickets$($global:LastSelectTicket.ticketName.Replace(' ',''))_$(Get-Date -Format 'yyyyMMdd_ss').json"
         searchForTickets
     }
 }
@@ -1350,13 +1358,13 @@ $inputXML = @"
             $item | Add-Member -type NoteProperty -Name 'Status' -Value ""
             
             if ( $prioCB.SelectionBoxItem -eq "Non" ) {
-                $item | ConvertTo-Json | Out-File -FilePath "$newTickets\$($filtertitle).json"
+                $item | ConvertTo-Json | Out-File -FilePath "$Global:newTickets\$($filtertitle).json"
             } elseif ( $prioCB.SelectionBoxItem -eq "Prio 1" ) {
-                $item | ConvertTo-Json | Out-File -FilePath "$Prio1\$($filtertitle).json"
+                $item | ConvertTo-Json | Out-File -FilePath "$Global:prio1\$($filtertitle).json"
             } elseif ( $prioCB.SelectionBoxItem -eq "Prio 2" ) {
-                $item | ConvertTo-Json | Out-File -FilePath "$Prio1\$($filtertitle).json"
+                $item | ConvertTo-Json | Out-File -FilePath "$Global:prio1\$($filtertitle).json"
             } elseif ( $prioCB.SelectionBoxItem -eq "Prio 3" ) {
-                $item | ConvertTo-Json | Out-File -FilePath "$Prio3\$($filtertitle).json"
+                $item | ConvertTo-Json | Out-File -FilePath "$Global:prio3\$($filtertitle).json"
             } 
             searchForTickets
             $Window.Hide()
@@ -1462,13 +1470,13 @@ $inputXML = @"
 
         if ( $newNameT.Text ) {
 
-            $NewT = (Get-ChildItem -Path $newTickets -File).FullName
-            $SolvdT = (Get-ChildItem -Path $solvedTickets -File).FullName
-            $Prio1T = (Get-ChildItem -Path $prio1 -File).FullName
-            $Prio2T = (Get-ChildItem -Path $prio2 -File).FullName
-            $Prio3T = (Get-ChildItem -Path $prio3 -File).FullName
+            $NewT = (Get-ChildItem -Path $Global:newTickets -File).FullName
+            $SolvdT = (Get-ChildItem -Path $Global:solvedTickets -File).FullName
+            $Global:prio1T = (Get-ChildItem -Path $Global:prio1 -File).FullName
+            $Global:prio2T = (Get-ChildItem -Path $Global:prio2 -File).FullName
+            $Global:prio3T = (Get-ChildItem -Path $Global:prio3 -File).FullName
             $NotSolvdT = (Get-ChildItem -Path $NotsolvedTickets -File).FullName
-            $DeletedT = (Get-ChildItem -Path $deletedTickets -File).FullName
+            $DeletedT = (Get-ChildItem -Path $Global:deletedTickets -File).FullName
 
             $temp = $loadedtickets[$global:LastSelectTicket.ticketName].Split("\") | Select-Object -Last 1
             $tempDate = ($temp.Split("_") | Select-Object -Last 1).Replace(".json","")
@@ -1477,9 +1485,9 @@ $inputXML = @"
             
             if ( "$NewT" -notlike "*$($newNameT.Text)*" -or `
                    "$SolvdT" -notlike "*$($newNameT.Text)*" -or ` 
-                      "$Prio1T" -notlike "*$($newNameT.Text)*" -or `
-                          "$Prio2T" -notlike "*$($newNameT.Text)*" -or ` 
-                             "$Prio3T" -notlike "*$($newNameT.Text)*" -or ` 
+                      "$Global:prio1T" -notlike "*$($newNameT.Text)*" -or `
+                          "$Global:prio2T" -notlike "*$($newNameT.Text)*" -or ` 
+                             "$Global:prio3T" -notlike "*$($newNameT.Text)*" -or ` 
                                   "$NotSolvdT" -notlike "*$($newNameT.Text)*" -or ` 
                                       "$DeletedT" -notlike "*$($newNameT.Text)*" ) { 
                 
@@ -1516,9 +1524,9 @@ function autosaveSettings () {
     $item = New-Object PSObject
     $item | Add-Member -type NoteProperty -Name 'TicketPath' -Value $Global:Path
     $item | Add-Member -type NoteProperty -Name 'NewR' -Value $NewR.IsChecked
-    $item | Add-Member -type NoteProperty -Name 'Prio1R' -Value $Prio1R.IsChecked
-    $item | Add-Member -type NoteProperty -Name 'Prio2R' -Value $Prio2R.IsChecked
-    $item | Add-Member -type NoteProperty -Name 'Prio3R' -Value $Prio3R.IsChecked
+    $item | Add-Member -type NoteProperty -Name 'Prio1R' -Value $Global:prio1R.IsChecked
+    $item | Add-Member -type NoteProperty -Name 'Prio2R' -Value $Global:prio2R.IsChecked
+    $item | Add-Member -type NoteProperty -Name 'Prio3R' -Value $Global:prio3R.IsChecked
     $item | Add-Member -type NoteProperty -Name 'SolvedR' -Value $SolvedR.IsChecked
     $item | Add-Member -type NoteProperty -Name 'NotSolvedR' -Value $NotSolvedR.IsChecked
     $item | Add-Member -type NoteProperty -Name 'WithOutOwner' -Value $showAllTicketsR.IsChecked
@@ -1528,7 +1536,6 @@ function autosaveSettings () {
     $item | Add-Member -type NoteProperty -Name 'first' -Value $Global:first
     $item | Add-Member -type NoteProperty -Name 'second' -Value $Global:second
     $item | Add-Member -type NoteProperty -Name 'third' -Value $Global:third
-
 
     $item | ConvertTo-Json | Out-File -FilePath "$Global:Settings\Userprofile.json"
 }
@@ -1650,12 +1657,14 @@ $inputXML = @"
         if ( [Int]$firstTB.Text -gt [Int]$secondTB.Text -and [Int]$secondTB.Text -gt [Int]$thirdTB.Text ) {
             $Global:ticketOwner = $selectUserCB.SelectedValue
             $ticketOwnerL.Text = "User: $Global:ticketOwner"
+            $temp = ""
             $Global:Path = $pathT.Text
             $Global:autoMove = $automoveCB.IsChecked
             $Global:first = $firstTB.Text 
             $Global:second = $secondTB.Text
             $Global:third = $thirdTB.Text
             autosaveSettings
+            loadAutosaveSettings
             searchForTickets
             $Window.Hide()
         } else {
@@ -1734,9 +1743,9 @@ $Timer2.add_Tick({
     }
 
     if ( $Global:autoMove ) {
-        $pauseT = (Get-ChildItem -Path $pause -File).FullName
-        if ( $pauseT ) {  
-            $pauseT | ForEach-Object {
+        $Global:pauseT = (Get-ChildItem -Path $Global:pause -File).FullName
+        if ( $Global:pauseT ) {  
+            $Global:pauseT | ForEach-Object {
                 $temp = ($_.Split("\") | Select-Object -Last 1).ToString().Replace(".json", "")
                 $json = Get-Content -Path $_ | ConvertFrom-Json
 
@@ -1747,13 +1756,13 @@ $Timer2.add_Tick({
                     if ( $limit -le $Global:first -and $limit -ge 0 -or $limit -le 0 ) {
                     
                         if ( $json.prio -eq "Prio 1" ) { 
-                           Move-Item -Path $_ -Destination $prio1    
+                           Move-Item -Path $_ -Destination $Global:prio1    
                            searchForTickets 
                         } elseif ( $json.prio -eq "Prio 2" ) {
-                           Move-Item -Path $_ -Destination $prio2   
+                           Move-Item -Path $_ -Destination $Global:prio2   
                            searchForTickets 
                         }elseif ( $json.prio -eq "Prio 3" ) {
-                           Move-Item -Path $_ -Destination $prio3 
+                           Move-Item -Path $_ -Destination $Global:prio3 
                            searchForTickets 
                         }
                     }
@@ -1771,10 +1780,10 @@ $exitM.add_Click({ $MainWindow.Close() })
 $newR.Add_Click({ searchForTickets -show $false })
 $solvedR.Add_Click({ searchForTickets -show $true })
 $notsolvedR.Add_Click({ searchForTickets -show $true })
-$prio1R.Add_Click({ searchForTickets -show $true })
-$prio2R.Add_Click({ searchForTickets -show $true })
-$prio3R.Add_Click({ searchForTickets -show $true })
-$pauseR.Add_Click({ searchForTickets -show $true })
+$Global:prio1R.Add_Click({ searchForTickets -show $true })
+$Global:prio2R.Add_Click({ searchForTickets -show $true })
+$Global:prio3R.Add_Click({ searchForTickets -show $true })
+$Global:pauseR.Add_Click({ searchForTickets -show $true })
 $showWithNoOwners.Add_Click({ searchForTickets })
 
 $Global:noOwnersWasChecked = $false  
@@ -1796,7 +1805,7 @@ $resetAssignTicketB.Add_Click({ resetTicketOwner })
 $choosePrio1B.Add_Click({ prio1 })
 $ChoosePrio2B.Add_Click({ prio2 })
 $ChoosePrio3B.Add_Click({ prio3 })
-$pauseTicketB.Add_Click({ pause })
+$Global:pauseTicketB.Add_Click({ pause })
 $deleteTicketB.Add_Click({ deleteTicket })
 $searchB.Add_Click({ searchForTickets })
 
