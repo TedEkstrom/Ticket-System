@@ -771,7 +771,7 @@ $inputXML = @"
             <StackPanel>
                 <TextBlock Text="Add a comment" FontSize="20" FontWeight="Bold" Foreground="#2C3E50" />
 
-                <TextBox Name="commentT" FontSize="15" Height="360" Margin="10,20,10,0" 
+                <TextBox Name="commentT" SpellCheck.IsEnabled="True" FontSize="15" Height="360" Margin="10,20,10,0" 
                      Text="" Foreground="Black" 
                      AcceptsReturn="True"  TextWrapping="Wrap"
                      IsReadOnly="False" VerticalScrollBarVisibility="Auto"/>
@@ -862,7 +862,7 @@ $inputXML = @"
                         <ComboBoxItem Content="Awaiting approval"/>
                         <ComboBoxItem Content="Planned"/>
                     </ComboBox>
-                    <TextBox Name="statusT" Text="Custom text" FontSize="15" Width="150" Margin="0,0,0,0" 
+                    <TextBox Name="statusT" SpellCheck.IsEnabled="True" Text="Custom text" FontSize="15" Width="150" Margin="0,0,0,0" 
                      Foreground="Black" AcceptsReturn="True" TextWrapping="Wrap" Visibility="Hidden"
                      VerticalScrollBarVisibility="Auto"/>
                 </StackPanel>
@@ -1175,11 +1175,9 @@ function calender () {
 </Window>
 "@
 
-    # Läs XAML
     $reader = (New-Object System.Xml.XmlNodeReader $xaml)
     $window = [System.Windows.Markup.XamlReader]::Load($reader)
 
-    # Hämta UI-element
     $prevBtn = $window.FindName("PrevMonthBtn")
     $nextBtn = $window.FindName("NextMonthBtn")
     $monthDisplay = $window.FindName("MonthDisplay")
@@ -1189,18 +1187,24 @@ function calender () {
     $closeBtn = $window.FindName("CloseButton")
     $extraBtn = $window.FindName("ExtraButton")
 
-    # Startvärden
     $global:currentMonth = (Get-Date).Month
     $global:currentYear = (Get-Date).Year
 
-    # Uppdatera kalender med placeholders
     function updateCalendar {
         $dateGrid.Children.Clear()
-        $monthDisplay.Text = (Get-Culture).DateTimeFormat.MonthNames[$global:currentMonth - 1] + " " + $global:currentYear
-    
+        #$monthDisplay.Text = (Get-Culture).DateTimeFormat.MonthNames[$global:currentMonth - 1] + " " + $global:currentYear
+        $temp = (Get-Culture).DateTimeFormat.MonthNames[$global:currentMonth - 1] + " " + $global:currentYear
+        $monthDisplay.Text = (Get-Date).ToString("MMMM yyyy", [System.Globalization.CultureInfo]::GetCultureInfo("en-US"))
+
         $daysInMonth = [DateTime]::DaysInMonth($global:currentYear, $global:currentMonth)
 
-        for ($i = 1; $i -le $daysInMonth; $i++) {
+        for ($i = 1; $i -le $daysInMonth; $i++) { 
+            
+            if ( $i -lt 10 ) {
+                
+                [String]$i = "0"+$i
+            }
+            
             $txtBox = New-Object System.Windows.Controls.TextBox
             $txtBox.Text = "$i"
             $txtBox.Width = 35
@@ -1209,7 +1213,7 @@ function calender () {
 
             $currentDate = "$i $($monthDisplay.Text)"
             
-            if ( ((Get-Date).ToString("dd MMMM yyyy", [System.Globalization.CultureInfo]::GetCultureInfo("en-US"))) -like "*$currentDate*" ) {
+            if ( ((Get-Date).ToString("dd MMMM yyyy", [System.Globalization.CultureInfo]::GetCultureInfo("en-US"))) -eq $currentDate ) {
                 $txtBox.Background = [System.Windows.Media.Brushes]::Lightblue
             }
 
@@ -1237,11 +1241,15 @@ function calender () {
                 $selectedDateT.Text = "$($sender.Text) $([cultureinfo]::GetCultureInfo('en-US').DateTimeFormat.MonthNames[$global:currentMonth - 1]) $currentYear"          
             })
 
+            if ( $i -lt 10 ) {
+                
+                [int]$i = $i.Substring(1,1)
+            }
+
             $dateGrid.Children.Add($txtBox)
         }
     }
 
-    # Navigering mellan månader
     $prevBtn.Add_Click({
         if ($global:currentMonth -eq 1) {
             $global:currentMonth = 12
@@ -1262,17 +1270,14 @@ function calender () {
         updateCalendar
     })
 
-    # Hantering av knappar
     $okBtn.Add_Click({ 
         $Global:deadlineDate = $selectedDateT.Text 
         $Window.Hide()
     })
     $closeBtn.Add_Click({ $Window.Hide() })
 
-    # Initiera kalender
     updateCalendar
 
-    # Visa fönstret
     $window.ShowDialog()
 }
 
@@ -1290,7 +1295,7 @@ $inputXML = @"
                 <TextBlock Text="Create New Ticket" FontSize="20" FontWeight="Bold" Margin="0,0,0,20" Foreground="#2C3E50" />
 
                 <TextBlock Text="Issue:" FontSize="16" Foreground="Black" />
-                <TextBox Name="issueT" Height="30" Margin="0,5,0,10" Text="Enter issue description..." Foreground="Black"/>
+                <TextBox Name="issueT" SpellCheck.IsEnabled="True" Height="30" Margin="0,5,0,10" Text="Enter issue description..." Foreground="Black"/>
 
                 <TextBlock Text="Priority:" FontSize="16" Foreground="Black" />
                 <ComboBox Name="prioCB" Height="30" Margin="0,5,0,10">
@@ -1301,7 +1306,7 @@ $inputXML = @"
                 </ComboBox>
 
                 <TextBlock Text="Description:" FontSize="16" Foreground="#555555" />
-                <TextBox Name="descriptionT" Height="120" TextWrapping="Wrap" AcceptsReturn="True"
+                <TextBox Name="descriptionT" SpellCheck.IsEnabled="True" Height="120" TextWrapping="Wrap" AcceptsReturn="True"
                          VerticalScrollBarVisibility="Auto" Foreground="Black"
                          Margin="0,5,0,10" Text="Enter detailed description..." />
                 
