@@ -771,7 +771,7 @@ $inputXML = @"
             <StackPanel>
                 <TextBlock Text="Add a comment" FontSize="20" FontWeight="Bold" Foreground="#2C3E50" />
 
-                <TextBox Name="commentT" SpellCheck.IsEnabled="True" FontSize="15" Height="360" Margin="10,20,10,0" 
+                <TextBox Name="commentT" FontSize="15" Height="360" Margin="10,20,10,0" 
                      Text="" Foreground="Black" 
                      AcceptsReturn="True"  TextWrapping="Wrap"
                      IsReadOnly="False" VerticalScrollBarVisibility="Auto"/>
@@ -862,7 +862,7 @@ $inputXML = @"
                         <ComboBoxItem Content="Awaiting approval"/>
                         <ComboBoxItem Content="Planned"/>
                     </ComboBox>
-                    <TextBox Name="statusT" SpellCheck.IsEnabled="True" Text="Custom text" FontSize="15" Width="150" Margin="0,0,0,0" 
+                    <TextBox Name="statusT"   Text="Custom text" FontSize="15" Width="150" Margin="0,0,0,0" 
                      Foreground="Black" AcceptsReturn="True" TextWrapping="Wrap" Visibility="Hidden"
                      VerticalScrollBarVisibility="Auto"/>
                 </StackPanel>
@@ -1295,7 +1295,7 @@ $inputXML = @"
                 <TextBlock Text="Create New Ticket" FontSize="20" FontWeight="Bold" Margin="0,0,0,20" Foreground="#2C3E50" />
 
                 <TextBlock Text="Issue:" FontSize="16" Foreground="Black" />
-                <TextBox Name="issueT" SpellCheck.IsEnabled="True" Height="30" Margin="0,5,0,10" Text="Enter issue description..." Foreground="Black"/>
+                <TextBox Name="issueT"  Height="30" Margin="0,5,0,10" Text="Enter issue description..." Foreground="Black"/>
 
                 <TextBlock Text="Priority:" FontSize="16" Foreground="Black" />
                 <ComboBox Name="prioCB" Height="30" Margin="0,5,0,10">
@@ -1306,7 +1306,7 @@ $inputXML = @"
                 </ComboBox>
 
                 <TextBlock Text="Description:" FontSize="16" Foreground="#555555" />
-                <TextBox Name="descriptionT" SpellCheck.IsEnabled="True" Height="120" TextWrapping="Wrap" AcceptsReturn="True"
+                <TextBox Name="descriptionT"   Height="120" TextWrapping="Wrap" AcceptsReturn="True"
                          VerticalScrollBarVisibility="Auto" Foreground="Black"
                          Margin="0,5,0,10" Text="Enter detailed description..." />
                 
