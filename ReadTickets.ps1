@@ -805,7 +805,7 @@ $inputXML = @"
         throw
     }
 
-    $commentT.Text = "Uppdatering, $(Get-Date -Format 'dd MMM yyyy')"
+    $commentT.Text = "Update, $(Get-Date -Format 'dd MMM yyyy')"
 
     $addCommentB.Add_Click({
 
@@ -898,9 +898,8 @@ $inputXML = @"
                 <!-- Flyttade knapparna längst ner -->
                 <StackPanel Orientation="Horizontal" Margin="10">
                     <Button Name="addCommentB" Content="[ Add comment ]" Width="120" Background="#FF4DA3DC" Foreground="White" Padding="5" />
-                    <Button Name="updateB" Content="Update" Width="120" Background="#3498DB" Foreground="White" Padding="5" Margin="5,0,0,0" />
+                    <Button Name="closeB"  Content="Close and update" Width="120" Background="#3498DB" Foreground="White" Padding="5" Margin="5,0,0,0"/>
                     <Button Name="solvedB" Content="Solved" Width="120" Background="#2ECC71" Foreground="White" Padding="5" Margin="5,0,0,0"/>
-                    <Button Name="closeB"  Content="Close" Width="120" Background="#95A5A6" Foreground="White" Padding="5" Margin="5,0,0,0"/>
                     <Button Name="notSolvableB"  Content="Not solvable" Width="120" Background="Darkred" Foreground="White" Padding="5" Margin="5,0,0,0"/>
                 </StackPanel>
             </StackPanel>
@@ -926,7 +925,6 @@ $inputXML = @"
         $allUpdatesT = $Window.FindName("allUpdatesT")
         $tagT = $Window.FindName("tagT")
         $editB = $Window.FindName("editB")
-        $updateB = $Window.FindName("updateB")
         $solvedB = $Window.FindName("solvedB")
         $closeB = $Window.FindName("closeB")
         $notSolvableB = $Window.FindName("notSolvableB")
@@ -993,8 +991,8 @@ $inputXML = @"
     } else {
         $DeadlineT.Text = "Deadline: Not set"
     }
-
-    $updateB.Add_Click({ 
+    
+    $closeB.Add_Click({
 
         $fileToWrite = $global:loadedtickets[$global:LastSelectTicket.ticketName]
 
@@ -1085,8 +1083,6 @@ $inputXML = @"
         searchForTickets
         $Window.Hide()
     })
-
-    $closeB.Add_Click({$Window.Hide()})
 
     $notSolvableB.Add_Click({
         addComment
