@@ -1189,8 +1189,12 @@ function calender () {
     function updateCalendar {
         $dateGrid.Children.Clear()
         #$monthDisplay.Text = (Get-Culture).DateTimeFormat.MonthNames[$global:currentMonth - 1] + " " + $global:currentYear
-        $temp = (Get-Culture).DateTimeFormat.MonthNames[$global:currentMonth - 1] + " " + $global:currentYear
-        $monthDisplay.Text = (Get-Date).ToString("MMMM yyyy", [System.Globalization.CultureInfo]::GetCultureInfo("en-US"))
+        #$temp = (Get-Culture).DateTimeFormat.MonthNames[$global:currentMonth - 1] + " " + $global:currentYear
+        #$monthDisplay.Text = ($temp).ToString("MMMM yyyy", [System.Globalization.CultureInfo]::GetCultureInfo("en-US"))
+
+        $culture = [System.Globalization.CultureInfo]::GetCultureInfo("en-US")
+        $date = Get-Date -Year $global:currentYear -Month $global:currentMonth -Day 1
+        $monthDisplay.Text = $date.ToString("MMMM yyyy", $culture)
 
         $daysInMonth = [DateTime]::DaysInMonth($global:currentYear, $global:currentMonth)
 
