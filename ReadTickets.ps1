@@ -5,6 +5,11 @@
 $loadedtickets = @{}
 $global:LoadedTicket = @()
 $global:LastSelectTicket = ""
+
+$global:loadedAutotickets = @{}
+$global:LoadedAutoTicket = @()
+$global:LastAutoSelectTicket = ""
+
 $UnixTime = [DateTimeOffset]::Now.ToUnixTimeSeconds()
 $temp = [String]$UnixTime
 $UnixTime = $UnixTime * [bigint]::Pow(10, (10-$temp.Length))
@@ -72,6 +77,13 @@ $inputXML = @"
 
             <!-- Sidebar -->
             <StackPanel DockPanel.Dock="Left" Width="200" Background="#EEE">
+                <Button Content="Automatic Ticket" Name="autoTicketB" Margin="5" Padding="0"
+                        Background="#007ACC" Foreground="White"
+                        FontWeight="Bold" BorderBrush="Transparent"
+                        Width="180" Height="30"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Top"
+                        Cursor="Hand"/>
                 <Button Content="New Ticket" Name="newTicketB" Margin="5" Padding="0"
                         Background="#007ACC" Foreground="White"
                         FontWeight="Bold" BorderBrush="Transparent"
@@ -277,6 +289,7 @@ try {
     $searchTB = $MainWindow.FindName("searchTB")
     $searchB = $MainWindow.FindName("searchB")
     $cleareB = $MainWindow.FindName("cleareB")
+    $autoTicketB = $MainWindow.FindName("autoTicketB")
 }
 catch {
     Write-Warning $_.Exception
@@ -316,6 +329,7 @@ function loadAutosaveSettings () {
     $Global:prio2 = "$Global:Path\prio2\"
     $Global:prio3 = "$Global:Path\prio3\"
     $Global:pause = "$Global:Path\pause\"
+    $Global:autoTickets = "$Global:Path\autoTickets\"
 
     
     if ( !($Global:Path -eq $null) -and !(Test-Path -Path "$Global:Path\new" -ErrorAction SilentlyContinue ) ) {
@@ -328,7 +342,7 @@ function loadAutosaveSettings () {
         [void](New-Item -Path $Global:prio2 -ItemType Directory -ErrorAction SilentlyContinue)
         [void](New-Item -Path $Global:prio3 -ItemType Directory -ErrorAction SilentlyContinue)
         [void](New-Item -Path $Global:pause -ItemType Directory -ErrorAction SilentlyContinue)
-      
+        [void](New-Item -Path $Global:autoTickets -ItemType Directory -ErrorAction SilentlyContinue)
         $item = New-Object PSObject
         $item | Add-Member -type NoteProperty -Name 'ticketOwners' -Value 'User1'       
         $item | ConvertTo-Json | Out-File -FilePath "$Global:Path\owners.json"
@@ -606,12 +620,12 @@ function searchForTickets ($show) {
                      $temp = ($_.Split("\") | Select-Object -Last 1).ToString().Replace(".json", "")
                      $json = Get-Content -Path $_ | ConvertFrom-Json
                      scanJsonFiles -switch 1 -temp $temp -json $json
-             
                   }
                }
             }
 
             closeProgressBar -ProgressBar $ProgressBar -Show $show 
+
         } else {
         
             Write-Warning $Error
@@ -873,7 +887,6 @@ $inputXML = @"
                             HorizontalAlignment="Left" Margin="10,0,0,0" Height="20" />
                     <Button Name="resetDeadlineB" Content="Reset" Width="60" FontSize="12" 
                             HorizontalAlignment="Left" Margin="5,0,0,0" Height="20" />
-
                 </StackPanel>
                 <!-- Gör beskrivningen till en TextBox för mer utrymme och rullning -->
                 <Label Content="Description"/>
@@ -1292,7 +1305,7 @@ $inputXML = @"
     <Grid>
         <Border Background="White" CornerRadius="10" Padding="10" Margin="20">
             <StackPanel>
-                <TextBlock Text="Create New Ticket" FontSize="20" FontWeight="Bold" Margin="0,0,0,20" Foreground="#2C3E50" />
+                <TextBlock Text="📝 Create New Ticket" FontSize="20" FontWeight="Bold" Margin="0,0,0,20" Foreground="#2C3E50" />
 
                 <TextBlock Text="Issue:" FontSize="16" Foreground="Black" />
                 <TextBox Name="issueT"  Height="30" Margin="0,5,0,10" Text="Enter issue description..." Foreground="Black"/>
@@ -1416,6 +1429,500 @@ $inputXML = @"
     })
 
     [Void]$Window.ShowDialog()    
+}
+
+function autoTicket () {
+    
+    <#
+        * Automatic create tickets on specific dates
+        * Show a list over all the diffrent autotickets
+          - Easyest way to this is in the same way with folders.
+    #>
+    
+$inputXML = @"
+<Window x:Class="TicketSystem.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="List over automatic tickets" Height="600" Width="1200" UseLayoutRounding="True">
+    <Grid>
+        <DockPanel LastChildFill="True">
+
+            <!-- Översta filterpanelen -->
+            <StackPanel DockPanel.Dock="Top" Background="{DynamicResource {x:Static SystemColors.ActiveCaptionBrushKey}}" Margin="10">
+                <WrapPanel Background="{DynamicResource {x:Static SystemColors.ActiveCaptionBrushKey}}">
+                    <Button Content="Clear" Name="clearB" Margin="10,0,0,0" Padding="0"
+                            Background="#FF975252" Foreground="White"
+                            FontWeight="Bold" BorderBrush="Transparent"
+                            Width="100" Height="25" Cursor="Hand"/>
+                    <Button Content="Filter" Name="filterB" Margin="10,0,0,0" Padding="0"
+                            Background="#FF0B1E2B" Foreground="White"
+                            FontWeight="Bold" BorderBrush="Transparent"
+                            Width="100" Height="25" Cursor="Hand"/>
+                    <ComboBox Name="filterCB" Width="130" Height="25" Margin="10,10,0,10">
+                        <ComboBoxItem></ComboBoxItem>
+                        <ComboBoxItem>January</ComboBoxItem>
+                        <ComboBoxItem>February</ComboBoxItem>
+                        <ComboBoxItem>March</ComboBoxItem>
+                        <ComboBoxItem>April</ComboBoxItem>
+                        <ComboBoxItem>May</ComboBoxItem>
+                        <ComboBoxItem>June</ComboBoxItem>
+                        <ComboBoxItem>July</ComboBoxItem>
+                        <ComboBoxItem>August</ComboBoxItem>
+                        <ComboBoxItem>September</ComboBoxItem>
+                        <ComboBoxItem>October</ComboBoxItem>
+                        <ComboBoxItem>November</ComboBoxItem>
+                        <ComboBoxItem>December</ComboBoxItem>
+                    </ComboBox>
+                </WrapPanel>
+            </StackPanel>
+
+            <!-- Knappar längst ner -->
+            <StackPanel DockPanel.Dock="Bottom" Background="white" Margin="10">
+                <WrapPanel>
+                    <Button Content="OK" Name="okB" Margin="10,0,0,0" Padding="0"
+                            Background="#3498DB" Foreground="White"
+                            FontWeight="Bold" BorderBrush="Transparent"
+                            Width="100" Height="25" Cursor="Hand"/>
+
+                            <Button Content="New Automatic Ticket" Name="newAutoTicketB" Margin="10,0,0,0" Padding="0"
+                            Background="#3498DB" Foreground="White"
+                            FontWeight="Bold" BorderBrush="Transparent"
+                            Width="140" Height="25" Cursor="Hand"/>
+
+                    <Button Content="Delete ticket" Name="deleteB" Margin="10,0,0,0" Padding="0"
+                            Background="#FF975252" Foreground="White"
+                            FontWeight="Bold" BorderBrush="Transparent"
+                            Width="100" Height="25" Cursor="Hand"/>
+                </WrapPanel>
+            </StackPanel>
+
+            <!-- Lista i mitten -->
+            <ListView Name="autoticketListViewT" Foreground="Black" FontSize="15">
+                <ListView.ItemContainerStyle>
+                    <Style TargetType="ListViewItem">
+                        <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                    </Style>
+                </ListView.ItemContainerStyle>
+                <ListView.View>
+                    <GridView>
+                        <GridViewColumn Header="CreateDate" Width="120">
+                            <GridViewColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding createDate}" TextAlignment="Center" />
+                                </DataTemplate>
+                            </GridViewColumn.CellTemplate>
+                        </GridViewColumn>
+                        <GridViewColumn Header="Assigned to" Width="100">
+                            <GridViewColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding AssignedTo}" TextAlignment="Center" />
+                                </DataTemplate>
+                            </GridViewColumn.CellTemplate>
+                        </GridViewColumn>
+                        <GridViewColumn Header="Ticket Name" Width="300">
+                            <GridViewColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding ticketName}" TextAlignment="Center" 
+                                               ToolTip="{Binding ticketName}" ToolTipService.InitialShowDelay="10" />
+                                </DataTemplate>
+                            </GridViewColumn.CellTemplate>
+                        </GridViewColumn>
+                        <GridViewColumn Header="Status" Width="150">
+                            <GridViewColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding Status}" TextAlignment="Center" />
+                                </DataTemplate>
+                            </GridViewColumn.CellTemplate>
+                        </GridViewColumn>
+                        <GridViewColumn Header="Deadline" Width="150">
+                            <GridViewColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding Deadline}" TextAlignment="Center" />
+                                </DataTemplate>
+                            </GridViewColumn.CellTemplate>
+                        </GridViewColumn>
+                    </GridView>
+                </ListView.View>
+            </ListView>
+        </DockPanel>
+    </Grid>
+</Window>
+"@
+
+    #create window
+    $inputXML = $inputXML -replace 'mc:Ignorable="d"', '' -replace "x:N", 'N' -replace '^<Win.*', '<Window'
+    [xml]$XAML = $inputXML
+
+    #Read XAML
+    $reader = (New-Object System.Xml.XmlNodeReader $xaml)
+    try {
+        $Window = [Windows.Markup.XamlReader]::Load( $reader )
+        $clearB = $Window.FindName("clearB")
+        $filterB = $Window.FindName("filterB")
+        $filterCB = $Window.FindName("filterCB")
+        $okB = $Window.FindName("okB")
+        $newAutoTicketB = $Window.FindName("newAutoTicketB")
+        $deleteB = $Window.FindName("deleteB")
+        $autoticketListViewT = $Window.FindName("autoticketListViewT")
+    }
+
+    catch {
+        Write-Warning $_.Exception
+        throw
+    }
+
+    function updateAutoTicketList () {
+
+        $autoticketListViewT.Items.clear()
+        $global:loadedAutotickets.Clear()
+        $autoTicketsT = (Get-ChildItem -Path $Global:autoTickets -File).FullName
+
+        if ( !([string]::IsNullOrEmpty($autoTicketsT)) ) {
+            $autoTicketsT | ForEach-Object { 
+
+                $temp = ($_.Split("\") | Select-Object -Last 1).ToString().Replace(".json", "")
+                $json = Get-Content -Path $_ | ConvertFrom-Json
+
+                $ticket = New-Object PSObject -Property @{
+                    ticketName = $temp
+                    Status = $json.status
+                    Priority = $json.prio
+                    ReportedBy = $json.username
+                    Date = $json.date
+                    AssignedTO = $json.ticketOwner
+                    DeadLine = $json.deadLine
+                    createDate = $json.CreateDate
+                }
+
+                if ( !([string]::IsNullOrEmpty($filterCB.SelectedItem)) ) {                    if ( !([string]::IsNullOrEmpty($json.CreateDate)) ) { 
+                        $culture = [System.Globalization.CultureInfo]::GetCultureInfo("en-US")
+                        $parsedDate = [datetime]::ParseExact($json.CreateDate, "dd MMMM yyyy", $culture)
+                        if ( $filterCB.SelectedItem -like "*$($parsedDate.ToString("MMMM", $culture))*" ) {
+                            [void]$autoticketListViewT.Items.Add($ticket)  
+                            $Global:loadedAutotickets.Add($temp, $_)
+                        }
+                    }
+                } else {
+                    
+                    [void]$autoticketListViewT.Items.Add($ticket)  
+                    $Global:loadedAutotickets.Add($temp, $_)
+                }
+            }
+        }
+    }
+    updateAutoTicketList
+    
+    $autoticketListViewT.Add_SelectionChanged({
+        param($sender, $e)
+        $selectedItem = $sender.SelectedItem        
+        $global:LastAutoSelectTicket = $selectedItem
+        if ( $autoticketListViewT.Items.Count -eq $global:LoadedAutoTickets.count -and !$selectedItem.ticketName -eq "" ) {
+            $global:LoadedAutoTicket = Get-Content -Path $global:loadedAutotickets[$selectedItem.ticketName] -ErrorAction SilentlyContinue | ConvertFrom-Json
+        } 
+    })
+
+    
+    $autoticketListViewT.Add_MouseDoubleClick({ createAndUpdateAutoTicket -switch Update })
+     
+    $newAutoTicketB.Add_Click({createAndUpdateAutoTicket})
+
+    $deleteB.Add_Click({
+    
+        if ( $autoticketListViewT.SelectedItems.ticketName.Length -gt 0  ) {      
+            Remove-Item -Path $global:loadedAutotickets[$global:LastAutoSelectTicket.ticketName]
+            updateAutoTicketList
+        }
+    
+    })
+
+    $clearB.Add_Click({ 
+        $filterCB.SelectedItem = $null 
+        updateAutoTicketList
+    })
+
+    $filterB.Add_Click({updateAutoTicketList})
+
+    $okB.Add_Click({$Window.hide()})
+
+    [Void]$Window.ShowDialog();
+}
+
+function createAndUpdateAutoTicket ($switch) {
+    
+$inputXML = @"
+<Window x:Class="TicketSystem.NewOrUpdateAutoTicket"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Automatic Ticket" Height="640" Width="720"
+        Background="#ECEFF1"
+        WindowStartupLocation="CenterScreen">
+
+    <Grid>
+        <Border Background="White" CornerRadius="10" Padding="10" Margin="20">
+            <StackPanel>
+
+                <TextBlock Name="headerT" Text="📝 Create a High Priority Automatic Ticket" FontSize="22" FontWeight="SemiBold" Margin="0,0,0,20" Foreground="#37474F"/>
+
+                <TextBlock Text="Issue" FontSize="15" Foreground="#263238" Margin="0,0,0,2"/>
+                <TextBox Name="issueT" Height="32" FontSize="14" Padding="6" Margin="0,0,0,12" Background="#FAFAFA" BorderBrush="#B0BEC5"/>
+
+                <StackPanel Orientation="Horizontal" Margin="0,0,0,10" VerticalAlignment="Center">
+                    <TextBlock Name="createDateT" Text="Create date: Not set" FontSize="14" Foreground="#455A64" VerticalAlignment="Center"/>
+                    <Button Name="createDateB" Content="Add" Width="80" Height="26" FontSize="12" Margin="10,0,0,0" Background="#90CAF9" Foreground="Black" BorderBrush="Transparent"/>
+                    <Button Name="resetCreateDateB" Content="Reset" Width="60" FontSize="12" Height="24" Margin="5,0,0,0" Background="#EF9A9A" BorderBrush="Transparent"/>
+                </StackPanel>
+
+                <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                    <TextBlock Text="Select User:" FontSize="14" Foreground="#455A64" VerticalAlignment="Center"/>
+                    <ComboBox Name="selectUserCB" Width="200" Margin="10,0,0,0"/>
+                </StackPanel>
+
+                <StackPanel Orientation="Horizontal" Margin="0,0,0,10" VerticalAlignment="Center">
+                    <TextBlock Text="Status:" FontSize="15" Foreground="#2E7D32" VerticalAlignment="Center"/>
+                    <ComboBox Name="statusCB" Width="160" Margin="10,0,15,0" FontSize="13" Background="#FAFAFA" BorderBrush="#B0BEC5">
+                        <ComboBoxItem Content="Not set"/>
+                        <ComboBoxItem Content="In progress" IsSelected="True"/>
+                        <ComboBoxItem Content="Awaiting response"/>
+                        <ComboBoxItem Content="Pending"/>
+                        <ComboBoxItem Content="Response"/>
+                        <ComboBoxItem Content="External"/>
+                        <ComboBoxItem Content="Resolved"/>
+                        <ComboBoxItem Content="Reopened"/>
+                        <ComboBoxItem Content="Rejected"/>
+                        <ComboBoxItem Content="Closed without action"/>
+                        <ComboBoxItem Content="Awaiting approval"/>
+                        <ComboBoxItem Content="Planned"/>
+                    </ComboBox>
+                    <TextBox Name="statusT" Width="150" Margin="0,0,0,0" Visibility="Hidden" FontSize="13"
+                             Padding="4" Text="Custom text" Foreground="Black" AcceptsReturn="True" TextWrapping="Wrap"
+                             VerticalScrollBarVisibility="Auto" Background="#FAFAFA" BorderBrush="#B0BEC5"/>
+                </StackPanel>
+
+                <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
+                    <TextBlock Name="DeadlineT" Text="Deadline: Not set" FontSize="14" Foreground="#455A64" VerticalAlignment="Center"/>
+                    <Button Name="deadlineB" Content="Add" Width="80" FontSize="12" Height="24" Margin="10,0,0,0" Background="#A5D6A7" BorderBrush="Transparent"/>
+                    <Button Name="resetDeadlineB" Content="Reset" Width="60" FontSize="12" Height="24" Margin="5,0,0,0" Background="#EF9A9A" BorderBrush="Transparent"/>
+                </StackPanel>
+
+                <TextBlock Text="Description" FontSize="15" Foreground="#455A64" Margin="0,4,0,2"/>
+                <TextBox Name="descriptionT" Height="120" TextWrapping="Wrap" AcceptsReturn="True" VerticalScrollBarVisibility="Auto"
+                         FontSize="13" Background="#FAFAFA" BorderBrush="#B0BEC5" Padding="6" Margin="0,0,0,12"/>
+
+                <TextBlock Text="Your Name" FontSize="15" Foreground="#263238" Margin="0,0,0,2"/>
+                <TextBox Name="userT" Height="30" Margin="0,0,0,12" FontSize="14" Background="#FAFAFA" Padding="6" BorderBrush="#B0BEC5"/>
+
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" Margin="0,20,0,0">
+                    <Button Name="newTicketB" Content="Submit" Width="120" Background="#42A5F5" Foreground="White" Padding="6" FontSize="14" FontWeight="SemiBold"/>
+                    <Button Name="closeB" Content="Cancel" Width="100" Background="#B0BEC5" Foreground="White" Padding="6" Margin="10,0,0,0" FontSize="14"/>
+                </StackPanel>
+
+            </StackPanel>
+        </Border>
+    </Grid>
+</Window>
+"@
+
+    #create window
+    $inputXML = $inputXML -replace 'mc:Ignorable="d"', '' -replace "x:N", 'N' -replace '^<Win.*', '<Window'
+    [xml]$XAML = $inputXML
+
+    #Read XAML
+    $reader = (New-Object System.Xml.XmlNodeReader $xaml)
+    try {
+        $Window = [Windows.Markup.XamlReader]::Load( $reader )
+        $headerT = $Window.FindName("headerT")
+        $issueT = $Window.FindName("issueT")
+        $newNameT = $Window.FindName("newNameT")
+        $renameB = $Window.FindName("renameB")
+        $newTicketB = $Window.FindName("newTicketB")
+        $closeB = $Window.FindName("closeB")
+        $descriptionT = $Window.FindName("descriptionT")
+        $ticketNameT = $Window.FindName("ticketNameT")
+        $statusCB = $Window.FindName("statusCB")
+        $statusT = $Window.FindName("statusT")
+        $DeadlineT = $Window.FindName("DeadlineT")
+        $DeadlineB = $Window.FindName("deadlineB")
+        $resetDeadlineB = $Window.FindName("resetDeadlineB")
+        $createDateT = $Window.FindName("createDateT")
+        $createDateB = $Window.FindName("createDateB")
+        $resetCreateDateB = $Window.FindName("resetCreateDateB")
+        $userT = $Window.FindName("userT")
+        $selectUserCB = $Window.FindName("selectUserCB")
+    }
+    catch {
+        Write-Warning $_.Exception
+        throw
+    }
+
+    
+    $Global:deadlineDate = ""
+    
+    $ticketOwners = Get-Content -Path "$Global:Path\owners.json" | ConvertFrom-Json
+    $ticketOwners = $ticketOwners.ticketOwners.split(",").trim()
+
+    $selectUserCB.Items.add("")
+    $ticketOwners | ForEach-Object { $selectUserCB.Items.add($_) }
+
+    if ( $switch -eq "Update" ) {
+
+        $headerT.Text = "Update Automatic Tickets"
+        $newTicketB.Content = "Update"
+  
+        $issueT.Text = $Global:loadedAutoticket.title
+        $descriptionT.Text = $Global:loadedAutoticket.Error
+        $desiredStatus = $Global:loadedAutoticket.status
+        $userT.Text = $Global:loadedAutoticket.Name
+        $selectUserCB.SelectedItem = $Global:loadedAutoticket.ticketOwner
+
+        $notSet = $true
+        foreach ($item in $statusCB.Items) {
+            if ($item.Content -eq $desiredStatus) {
+                $statusCB.SelectedItem = $item
+                $notSet = $false
+                break
+            } else {
+
+                $statusCB.SelectedItem = "Not set"
+            }
+        }
+
+        if ( $notSet ) {
+            foreach ($item in $statusCB.Items) {
+            if ($item.Content -eq "Not set") {
+                $statusCB.SelectedItem = $item
+                break
+                } 
+            }
+            $statusT.Visibility = "Visible"
+            $statusT.Text = $desiredStatus
+        }
+        
+        if ( !($Global:loadedAutoticket.createDate -eq $null -or $Global:loadedAutoticket.createDate -eq "") ) {
+            $createDateT.Text = "Create Date: $($Global:loadedAutoticket.createDate)"
+        } else {
+            $DeadlineT.Text = "Create Date: Not set"
+        }
+           
+        if ( !($Global:loadedAutoticket.deadLine -eq $null -or $Global:loadedAutoticket.deadLine -eq "") ) {
+            $DeadlineT.Text = "Deadline: $($Global:loadedAutoticket.deadLine)"
+        } else {
+            $DeadlineT.Text = "Deadline: Not set"
+        }
+    }
+
+    $newTicketB.Add_Click({
+        $filtertitle = $issueT.Text.Replace(":", "-")
+
+        if ( !$switch -eq "update" ) {
+            ## New auto ticket
+            $item = New-Object PSObject
+            $item | Add-Member -type NoteProperty -Name 'Title' -Value $issueT.Text
+            $item | Add-Member -type NoteProperty -Name 'Computer' -Value ""
+            $item | Add-Member -type NoteProperty -Name 'Tag' -Value $env:COMPUTERNAME 
+            $item | Add-Member -type NoteProperty -Name 'Date' -Value $(Get-Date -Format yyMMdd)
+            $item | Add-Member -type NoteProperty -Name 'Error' -Value $descriptionT.Text
+            $item | Add-Member -type NoteProperty -Name 'Name' -Value $userT.Text
+            $item | Add-Member -type NoteProperty -Name 'Update' -Value ""
+            $item | Add-Member -type NoteProperty -Name 'Username' -Value $env:USERNAME
+            $item | Add-Member -type NoteProperty -Name 'Prio' -Value "Prio 1"
+            if ( !($statusCB.SelectionBoxItem -eq "Not set") ) {
+                $item | Add-Member -type NoteProperty -Name 'Status' -Value $statusCB.SelectionBoxItem     
+            } else {
+                $item | Add-Member -type NoteProperty -Name 'Status' -Value $statusT.Text
+            } 
+            $item | Add-Member -type NoteProperty -Name 'ID' -Value "$(New-Guid)" 
+
+            if ( $DeadlineT.Text -eq "Deadline: Not set" ) {
+                $item | Add-Member -type NoteProperty -Name 'deadLine' -Value ""
+            } else {
+                $item | Add-Member -type NoteProperty -Name 'deadLine' -Value $DeadlineT.Text.replace("Deadline: ", "")
+            }
+
+            $item | Add-Member -type NoteProperty -Name 'createDate' -Value $createDateT.Text.replace("Create Date: ", "")
+            $item | ConvertTo-Json | Out-File -FilePath "$Global:autoTickets\$($filtertitle).json" -Force
+
+        } else {
+            ## Update auro ticket
+
+            if ( !($Global:loadedAutoticket.title -eq $issueT.Text) ) {          
+                Rename-Item -LiteralPath $global:loadedAutotickets[$global:LastAutoSelectTicket.ticketName] -NewName "$($issueT.Text).json"
+                
+            }
+
+            $filtertitle = $issueT.Text.Replace(":", "-")
+
+            $item = New-Object PSObject
+            $item | Add-Member -type NoteProperty -Name 'Title' -Value $issueT.Text
+            $item | Add-Member -type NoteProperty -Name 'Computer' -Value ""
+            $item | Add-Member -type NoteProperty -Name 'Tag' -Value $env:COMPUTERNAME 
+            $item | Add-Member -type NoteProperty -Name 'Date' -Value $(Get-Date -Format yyMMdd)
+            $item | Add-Member -type NoteProperty -Name 'Error' -Value $descriptionT.Text
+            $item | Add-Member -type NoteProperty -Name 'Name' -Value $userT.Text
+            $item | Add-Member -type NoteProperty -Name 'Update' -Value ""
+            $item | Add-Member -type NoteProperty -Name 'Username' -Value $env:USERNAME
+            $item | Add-Member -type NoteProperty -Name 'Prio' -Value "Prio 1"
+            $item | Add-Member -type NoteProperty -Name 'ticketOwner' -Value $selectUserCB.SelectionBoxItem 
+            if ( !($statusCB.SelectionBoxItem -eq "Not set") ) {
+                $item | Add-Member -type NoteProperty -Name 'Status' -Value $statusCB.SelectionBoxItem     
+            } else {
+                $item | Add-Member -type NoteProperty -Name 'Status' -Value $statusT.Text
+            } 
+            $item | Add-Member -type NoteProperty -Name 'ID' -Value $Global:loadedAutoticket.id 
+            
+            if ( $DeadlineT.Text -eq "Deadline: Not set" ) {
+                $item | Add-Member -type NoteProperty -Name 'deadLine' -Value ""
+            } else {
+                $item | Add-Member -type NoteProperty -Name 'deadLine' -Value $DeadlineT.Text.replace("Deadline: ", "")
+            }
+            $item | Add-Member -type NoteProperty -Name 'createDate' -Value $createDateT.Text.replace("Create Date: ", "")
+
+            $item | ConvertTo-Json | Out-File -FilePath "$Global:autoTickets\$($filtertitle).json" -Force
+        }
+        
+        updateAutoTicketList
+        $Window.Hide()
+    })
+
+    $statusCB.Add_SelectionChanged({ 
+        $selectedItem = $args[1].AddedItems[0].Content
+
+        if ( $selectedItem -eq "Not set" ) {
+            
+            $statusT.Visibility = "Visible"
+            
+            if ( !($desiredStatus -eq "") ) { 
+                $statusT.Text = $desiredStatus
+            }
+        } else {
+            $statusT.Visibility = "Hidden"
+        }
+    })
+
+    $createDateB.Add_Click({
+        calender
+        $createDateT.Text = "Create Date: $($Global:deadlineDate)"
+        $Global:deadlineDate = ""
+    })
+
+    $deadlineB.Add_Click({
+        calender
+        $DeadlineT.Text = "Deadline: $($Global:deadlineDate)"
+        $Global:deadlineDate = ""
+    })
+
+    $resetDeadlineB.Add_Click({
+        $DeadlineT.Text = "Deadline: Not set"
+        $Global:deadlineDate = ""
+    })
+
+    $resetCreateDateB.Add_Click({
+        $createDateT.Text = "Create Date: Not set"
+        $Global:deadlineDate = ""
+    })
+
+    $closeB.Add_Click({ $Window.Hide() })
+
+    [Void]$Window.ShowDialog();
 }
 
 function renameTicket () {
@@ -1779,6 +2286,67 @@ $Timer2.add_Tick({
 
 $Timer2.Start()
 
+$Timer3 = New-Object System.Windows.Threading.DispatcherTimer
+$Timer3.Interval = [TimeSpan]::FromSeconds(86400).TotalDays
+
+function createTicketOnDate () {
+
+ ## Automatic ticket creation
+
+    $allIDs = @()
+
+    $ticketsToBeCreated = (Get-ChildItem -Path $Global:autoTickets).FullName
+
+    $idCheck = (Get-ChildItem -Path $Global:prio1).FullName
+
+    $idCheck | ForEach-Object { 
+        
+        if ( ![string]::IsNullOrEmpty($_) ) {
+            $json = Get-Content -Path $_ | ConvertFrom-Json
+            $allIDs += $json.id 
+        }
+    }
+
+    $ticketsToBeCreated | ForEach-Object {
+        
+        $json = Get-Content -Path $_ | ConvertFrom-Json
+
+        if ( ![string]::IsNullOrEmpty($json.createDate) ) {
+
+            #$createDate = Get-Date $json.createDate -ErrorAction SilentlyContinue
+            <#
+            $culture = [System.Globalization.CultureInfo]::GetCultureInfo("en-US")
+            $date = Get-Date $json.createDate  -ErrorAction SilentlyContinue
+            $createDate = $date.ToString("dd MMMM yyyy", $culture)
+
+            $date2 = Get-Date -ErrorAction SilentlyContinue
+            $curentDate = $date2.ToString("dd MMMM yyyy", $culture)
+
+            $limit = $($createDate - $curentDate).days
+            #>
+
+            $culture = [System.Globalization.CultureInfo]::GetCultureInfo("en-US")
+
+            $date = [datetime]::ParseExact($json.createDate, "dd MMMM yyyy", $culture)
+            $createDate = $date
+            $currentDate = Get-Date
+
+            $limit = ($createDate - $currentDate).Days
+
+            if ( $limit -le 32 -and $limit -ge 0 -or $limit -le 0 ) {
+                
+                if ( !($json.ID -contains $allIDs) ) { Write-Host "ja"
+                    Copy-Item -Path $_ -Destination $Global:prio1  
+                }
+            }
+        }
+    }
+}
+createTicketOnDate
+
+$Timer3.add_Tick({createTicketOnDate})
+$Timer3.Start()
+
 $settingsM.add_Click({ settings })
 $exitM.add_Click({ $MainWindow.Close() })
 
@@ -1813,6 +2381,8 @@ $ChoosePrio3B.Add_Click({ prio3 })
 $Global:pauseTicketB.Add_Click({ pause })
 $deleteTicketB.Add_Click({ deleteTicket })
 $searchB.Add_Click({ searchForTickets })
+
+$autoTicketB.Add_Click({ autoTicket })
 
 $searchTB.Add_KeyDown({  
     if ( $_.Key -eq "Enter" ) {
