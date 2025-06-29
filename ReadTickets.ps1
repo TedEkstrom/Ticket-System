@@ -15,7 +15,7 @@ $temp = [String]$UnixTime
 $UnixTime = $UnixTime * [bigint]::Pow(10, (10-$temp.Length))
 $Tag = $env:COMPUTERNAME
 
-$Global:deadlineDate = ""
+$Global:dateTime = ""
 
 $Global:Settings = "$env:USERPROFILE\Readtickets" 
 $Global:Path = ""
@@ -25,6 +25,8 @@ $Global:autoMove = $true
 $Global:first = 8
 $Global:second = 4
 $Global:third = 0
+
+$chooseTicketOwner = $false
 
 ####################################################
 
@@ -314,6 +316,12 @@ function loadAutosaveSettings () {
     $Global:second = $AutoSave.second
     $Global:third = $AutoSave.third
     $Global:Path = $AutoSave.ticketPath
+    $Global:chooseTicketOwner = $AutoSave.chooseTicketOwner
+
+    ## Maybe I'll improve this later. A bit of a hack.
+    if ( $Global:chooseTicketOwner -eq $null ) {
+        $Global:chooseTicketOwner = $false
+    }
 
     if ( [string]::IsNullOrEmpty($Global:first) -or [string]::IsNullOrEmpty($Global:second) -or [string]::IsNullOrEmpty($Global:third) ) {
         $Global:first = 8
@@ -714,29 +722,111 @@ function deleteTicket () {
 
 function assignTicketOwner () {
 
-    if ( $Tickets.SelectedItems.ticketName.Length -gt 0  ) {
 
-        $fileToWrite = $global:loadedtickets[$global:LastSelectTicket.ticketName]
+$inputXML = @"
+<Window x:Class="WpfApp1.assignTicket"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:WpfApp1"
+        mc:Ignorable="d"
+        Title="Assign To Ticket" Height="180" Width="300">
+    <Grid>
+        <Border Background="White" CornerRadius="10" Padding="10" Margin="10">
+            <StackPanel>
 
-        $item = New-Object PSObject
-        $item | Add-Member -type NoteProperty -Name 'Title' -Value $global:LoadedTicket.Title
-        $item | Add-Member -type NoteProperty -Name 'Computer' -Value $global:LoadedTicket.Computer
-        $item | Add-Member -type NoteProperty -Name 'Tag' -Value $global:LoadedTicket.Tag
-        $item | Add-Member -type NoteProperty -Name 'Date' -Value $global:LoadedTicket.Date
-        $item | Add-Member -type NoteProperty -Name 'Error' -Value $global:LoadedTicket.Error
-        $item | Add-Member -type NoteProperty -Name 'Name' -Value $global:LoadedTicket.Name
-        $item | Add-Member -type NoteProperty -Name 'Update' -Value $global:LoadedTicket.Update
-        $item | Add-Member -type NoteProperty -Name 'Username' -Value $global:LoadedTicket.Username
-        $item | Add-Member -type NoteProperty -Name 'Prio' -Value $global:LoadedTicket.Prio
-        $item | Add-Member -type NoteProperty -Name 'ticketOwner' -Value $Global:ticketOwner
-        $item | Add-Member -type NoteProperty -Name 'Status' -Value $global:LoadedTicket.Status
-        $global:loadedticket =  $item
+                <!-- Användarval -->
+                <TextBlock Text="User for ticket system" />
+                <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                    <TextBlock Text="Select User:" FontSize="14" FontWeight="Bold" />
+                    <ComboBox Name="selectUserCB" Width="200" Margin="10,0,0,0"/>
+                 </StackPanel>
 
-        $SelectedItem = $Tickets.SelectedItems.Text
+                <!-- Kontrollknappar -->
+                <StackPanel Orientation="Horizontal" Margin="10">
+                    <Button Name="saveB" Content="Save" Width="120" Background="#3498DB" Foreground="White" Padding="5"/>
+                    <Button Name="closeB" Content="Close" Width="120" Background="#95A5A6" Foreground="White" Padding="5" Margin="5,0,0,0"/>
+                </StackPanel>
+            </StackPanel>
+        </Border>
+    </Grid>
+</Window>
+"@
 
-        saveChanges
-        searchForTickets
-    } 
+    #create window
+    $inputXML = $inputXML -replace 'mc:Ignorable="d"', '' -replace "x:N", 'N' -replace '^<Win.*', '<Window'
+    [xml]$XAML = $inputXML
+
+    #Read XAML
+    $reader = (New-Object System.Xml.XmlNodeReader $xaml)
+    try {
+        $Window = [Windows.Markup.XamlReader]::Load( $reader )
+        $selectUserCB = $Window.FindName("selectUserCB")
+        $saveB = $Window.FindName("saveB")
+        $closeB = $Window.FindName("closeB")
+    }
+    catch {
+        Write-Warning $_.Exception
+        throw
+    }
+
+    $ticketOwners = Get-Content -Path "$Global:Path\owners.json" | ConvertFrom-Json
+    $ticketOwners = $ticketOwners.ticketOwners.split(",").trim()
+
+    $ticketOwners | ForEach-Object { $selectUserCB.Items.add($_) }
+
+    $desiredUser = (Get-Content -Path "$Global:Settings\userprofile.json" | ConvertFrom-Json).ticketOwner
+    foreach ($item in $selectUserCB.Items) {
+        if ($item.Content -eq $desiredUser) {
+            $selectUserCB.SelectedItem = $item
+            break
+        }
+    }
+
+    function assignOwner () {
+           if ( $Tickets.SelectedItems.ticketName.Length -gt 0  ) {
+
+            $fileToWrite = $global:loadedtickets[$global:LastSelectTicket.ticketName]
+
+            $item = New-Object PSObject
+            $item | Add-Member -type NoteProperty -Name 'Title' -Value $global:LoadedTicket.Title
+            $item | Add-Member -type NoteProperty -Name 'Computer' -Value $global:LoadedTicket.Computer
+            $item | Add-Member -type NoteProperty -Name 'Tag' -Value $global:LoadedTicket.Tag
+            $item | Add-Member -type NoteProperty -Name 'Date' -Value $global:LoadedTicket.Date
+            $item | Add-Member -type NoteProperty -Name 'Error' -Value $global:LoadedTicket.Error
+            $item | Add-Member -type NoteProperty -Name 'Name' -Value $global:LoadedTicket.Name
+            $item | Add-Member -type NoteProperty -Name 'Update' -Value $global:LoadedTicket.Update
+            $item | Add-Member -type NoteProperty -Name 'Username' -Value $global:LoadedTicket.Username
+            $item | Add-Member -type NoteProperty -Name 'Prio' -Value $global:LoadedTicket.Prio
+
+            if ( $Global:chooseTicketOwner ) {
+                $item | Add-Member -type NoteProperty -Name 'ticketOwner' -Value $selectUserCB.Text
+            } else {
+                $item | Add-Member -type NoteProperty -Name 'ticketOwner' -Value $Global:ticketOwner
+            }
+            $item | Add-Member -type NoteProperty -Name 'Status' -Value $global:LoadedTicket.SelectedItem
+            $global:loadedticket =  $item
+
+            $SelectedItem = $Tickets.SelectedItems.Text
+
+            saveChanges
+            searchForTickets
+        } 
+    }
+
+    $saveB.Add_Click({
+        assignOwner
+        $Window.Hide()
+    })
+
+    $closeB.Add_Click({$Window.Hide()})
+    
+    if ( $Global:chooseTicketOwner ) {
+        [Void]$Window.ShowDialog()
+    } else {
+        assignOwner
+    }
 }
 
 
@@ -953,7 +1043,7 @@ $inputXML = @"
         throw
     }
 
-    $Global:deadlineDate = ""
+    $Global:dateTime = ""
     $ticketNameT.Text = $loadedticket.title
     $priorityT.Text = "Priority: "+$loadedticket.prio
     $descriptionT.Text = $global:LoadedTicket.Error
@@ -1026,7 +1116,7 @@ $inputXML = @"
         } else {
             $item | Add-Member -type NoteProperty -Name 'Status' -Value $statusT.Text
         }
-        $item | Add-Member -type NoteProperty -Name 'deadLine' -Value $Global:deadlineDate
+        $item | Add-Member -type NoteProperty -Name 'deadLine' -Value $Global:dateTime
         $global:loadedticket =  $item
 
         saveChanges
@@ -1143,13 +1233,13 @@ $inputXML = @"
 
     $deadlineB.Add_Click({
         calender
-        $DeadlineT.Text = "Deadline: $($Global:deadlineDate)"
+        $DeadlineT.Text = "Deadline: $($Global:dateTime)"
 
     })
 
     $resetDeadlineB.Add_Click({
         $DeadlineT.Text = "Deadline: Not set"
-        $Global:deadlineDate = ""
+        $Global:dateTime = ""
     })
 
     [Void]$Window.ShowDialog();
@@ -1284,7 +1374,7 @@ function calender () {
     })
 
     $okBtn.Add_Click({ 
-        $Global:deadlineDate = $selectedDateT.Text 
+        $Global:dateTime = $selectedDateT.Text 
         $Window.Hide()
     })
     $closeBtn.Add_Click({ $Window.Hide() })
@@ -1755,7 +1845,7 @@ $inputXML = @"
     }
 
     
-    $Global:deadlineDate = ""
+    $Global:dateTime = ""
     
     $ticketOwners = Get-Content -Path "$Global:Path\owners.json" | ConvertFrom-Json
     $ticketOwners = $ticketOwners.ticketOwners.split(",").trim()
@@ -1900,24 +1990,24 @@ $inputXML = @"
 
     $createDateB.Add_Click({
         calender
-        $createDateT.Text = "Create Date: $($Global:deadlineDate)"
-        $Global:deadlineDate = ""
+        $createDateT.Text = "Create Date: $($Global:dateTime)"
+        $Global:dateTime = ""
     })
 
     $deadlineB.Add_Click({
         calender
-        $DeadlineT.Text = "Deadline: $($Global:deadlineDate)"
-        $Global:deadlineDate = ""
+        $DeadlineT.Text = "Deadline: $($Global:dateTime)"
+        $Global:dateTime = ""
     })
 
     $resetDeadlineB.Add_Click({
         $DeadlineT.Text = "Deadline: Not set"
-        $Global:deadlineDate = ""
+        $Global:dateTime = ""
     })
 
     $resetCreateDateB.Add_Click({
         $createDateT.Text = "Create Date: Not set"
-        $Global:deadlineDate = ""
+        $Global:dateTime = ""
     })
 
     $closeB.Add_Click({ $Window.Hide() })
@@ -2049,6 +2139,9 @@ function autosaveSettings () {
     $item | Add-Member -type NoteProperty -Name 'second' -Value $Global:second
     $item | Add-Member -type NoteProperty -Name 'third' -Value $Global:third
 
+    $item | Add-Member -type NoteProperty -Name 'chooseTicketOwner' -Value $Global:chooseTicketOwner
+    
+
     $item | ConvertTo-Json | Out-File -FilePath "$Global:Settings\Userprofile.json"
 }
 
@@ -2062,7 +2155,7 @@ $inputXML = @"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:SelectUser"
         mc:Ignorable="d"
-        Title="Settings" Height="300" Width="583">
+        Title="Settings" Height="340" Width="583">
     <Grid>
         <Border Background="White" CornerRadius="10" Padding="10" Margin="10">
             <StackPanel>
@@ -2072,6 +2165,10 @@ $inputXML = @"
                 <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
                     <TextBlock Text="Select User:" FontSize="14" FontWeight="Bold" />
                     <ComboBox Name="selectUserCB" Width="200" Margin="10,0,0,0"/>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                    <TextBlock Text="When assigning the ticket you have to choose the person:" FontSize="14" FontWeight="Bold"  />
+                    <CheckBox Name="chooseTicketOwnerCB" Width="200" Margin="10,3,0,0" />
                 </StackPanel>
                 <TextBlock Text="Path to all the tickets to load" />
                 <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
@@ -2113,6 +2210,7 @@ $inputXML = @"
     $reader = (New-Object System.Xml.XmlNodeReader $xaml)
     try {
         $Window = [Windows.Markup.XamlReader]::Load( $reader )
+        $chooseTicketOwnerCB = $Window.FindName("chooseTicketOwnerCB")
         $selectUserCB = $Window.FindName("selectUserCB")
         $pathT = $Window.FindName("pathT")
         $saveB = $Window.FindName("saveB")
@@ -2120,7 +2218,7 @@ $inputXML = @"
         $automoveCB = $Window.FindName("automoveCB")
         $firstTB = $Window.FindName("firstTB")
         $secondTB = $Window.FindName("secondTB")
-        $thirdTB = $Window.FindName("thirdTB")
+        $thirdTB = $Window.FindName("thirdTB")       
     }
     catch {
         Write-Warning $_.Exception
@@ -2150,6 +2248,8 @@ $inputXML = @"
 
     $automoveCB.IsChecked = $Global:autoMove
 
+    $chooseTicketOwnerCB.isChecked = $Global:chooseTicketOwner
+
     $pathT.Text = $Global:Path 
 
     if (!$Global:Path) {
@@ -2170,6 +2270,7 @@ $inputXML = @"
             $Global:ticketOwner = $selectUserCB.SelectedValue
             $ticketOwnerL.Text = "User: $Global:ticketOwner"
             $temp = ""
+            $Global:chooseTicketOwner = $chooseTicketOwnerCB.IsChecked
             $Global:Path = $pathT.Text
             $Global:autoMove = $automoveCB.IsChecked
             $Global:first = $firstTB.Text 
