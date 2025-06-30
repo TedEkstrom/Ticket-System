@@ -10,11 +10,14 @@ The ticket system consists of two different applications; ReadTickets and Maketi
 
 In settings you can set where it should retrieve its tickets (of course in the same place they are sent from MakeTicket) but you can also choose users. Of course you have to choose where to retrieve your tickets for it to work correctly. In some cases you need to restart it.
 
-![image](https://github.com/user-attachments/assets/e4f0a409-653c-455f-9231-a7772528bb49)
+Automatic tickets is used to create recurring tickets. You set when they should be created and they will be created at that time.
+
+![image](https://github.com/user-attachments/assets/ccc0f3fb-1a03-4998-96eb-01c576d7e940)
 
 
 The MakeTicket.dat file is for MakeTicket and must be placed in the same folder. This is how you tell the application where to place the new tickets, for example \\\192.168.1.19\tickets.
 
+![image](https://github.com/user-attachments/assets/e4f0a409-653c-455f-9231-a7772528bb49)
 
 More admin users
 
