@@ -1533,7 +1533,7 @@ $inputXML = @"
 <Window x:Class="TicketSystem.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="List over automatic tickets" Height="600" Width="1200" UseLayoutRounding="True">
+        Title="List over automatic tickets" Height="600" Width="900" UseLayoutRounding="True">
     <Grid>
         <DockPanel LastChildFill="True">
 
@@ -1595,7 +1595,7 @@ $inputXML = @"
                 </ListView.ItemContainerStyle>
                 <ListView.View>
                     <GridView>
-                        <GridViewColumn Header="CreateDate" Width="120">
+                        <GridViewColumn Header="CreateDate" Width="150">
                             <GridViewColumn.CellTemplate>
                                 <DataTemplate>
                                     <TextBlock Text="{Binding createDate}" TextAlignment="Center" />
@@ -2407,37 +2407,37 @@ function createTicketOnDate () {
             $allIDs += $json.id 
         }
     }
+    if ( ![string]::IsNullOrEmpty($ticketsToBeCreated) ) {
+        $ticketsToBeCreated | ForEach-Object { 
+            $json = Get-Content -Path $_ | ConvertFrom-Json
 
-    $ticketsToBeCreated | ForEach-Object {
-        
-        $json = Get-Content -Path $_ | ConvertFrom-Json
+            if ( ![string]::IsNullOrEmpty($json.createDate) ) {
 
-        if ( ![string]::IsNullOrEmpty($json.createDate) ) {
+                #$createDate = Get-Date $json.createDate -ErrorAction SilentlyContinue
+                <#
+                $culture = [System.Globalization.CultureInfo]::GetCultureInfo("en-US")
+                $date = Get-Date $json.createDate  -ErrorAction SilentlyContinue
+                $createDate = $date.ToString("dd MMMM yyyy", $culture)
 
-            #$createDate = Get-Date $json.createDate -ErrorAction SilentlyContinue
-            <#
-            $culture = [System.Globalization.CultureInfo]::GetCultureInfo("en-US")
-            $date = Get-Date $json.createDate  -ErrorAction SilentlyContinue
-            $createDate = $date.ToString("dd MMMM yyyy", $culture)
+                $date2 = Get-Date -ErrorAction SilentlyContinue
+                $curentDate = $date2.ToString("dd MMMM yyyy", $culture)
 
-            $date2 = Get-Date -ErrorAction SilentlyContinue
-            $curentDate = $date2.ToString("dd MMMM yyyy", $culture)
+                $limit = $($createDate - $curentDate).days
+                #>
 
-            $limit = $($createDate - $curentDate).days
-            #>
+                $culture = [System.Globalization.CultureInfo]::GetCultureInfo("en-US")
 
-            $culture = [System.Globalization.CultureInfo]::GetCultureInfo("en-US")
+                $date = [datetime]::ParseExact($json.createDate, "dd MMMM yyyy", $culture)
+                $createDate = $date
+                $currentDate = Get-Date
 
-            $date = [datetime]::ParseExact($json.createDate, "dd MMMM yyyy", $culture)
-            $createDate = $date
-            $currentDate = Get-Date
+                $limit = ($createDate - $currentDate).Days
 
-            $limit = ($createDate - $currentDate).Days
-
-            if ( $limit -le 32 -and $limit -ge 0 -or $limit -le 0 ) {
+                if ( $limit -ge 0 -or $limit -le 0 ) {
                 
-                if ( !($json.ID -contains $allIDs) ) { Write-Host "ja"
-                    Copy-Item -Path $_ -Destination $Global:prio1  
+                    if ( !($json.ID -contains $allIDs) ) { 
+                        Copy-Item -Path $_ -Destination $Global:prio1  
+                    }
                 }
             }
         }
