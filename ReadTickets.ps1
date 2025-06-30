@@ -2441,6 +2441,8 @@ function createTicketOnDate () {
                 }
             }
         }
+
+    searchForTickets 
     }
 }
 createTicketOnDate
