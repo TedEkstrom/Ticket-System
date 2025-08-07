@@ -1673,6 +1673,8 @@ $inputXML = @"
                 $temp = ($_.Split("\") | Select-Object -Last 1).ToString().Replace(".json", "")
                 $json = Get-Content -Path $_ | ConvertFrom-Json
 
+                $tempDate = $json.CreateDate.toString().Substring(0, $json.CreateDate.Length-1)
+
                 $ticket = New-Object PSObject -Property @{
                     ticketName = $temp
                     Status = $json.status
@@ -1681,15 +1683,29 @@ $inputXML = @"
                     Date = $json.date
                     AssignedTO = $json.ticketOwner
                     DeadLine = $json.deadLine
-                    createDate = $json.CreateDate
+                    #createDate = $json.CreateDate
+                    createDate = $tempDate
                 }
 
                 if ( !([string]::IsNullOrEmpty($filterCB.SelectedItem)) ) {                    if ( !([string]::IsNullOrEmpty($json.CreateDate)) ) { 
-                        $culture = [System.Globalization.CultureInfo]::GetCultureInfo("en-US")
-                        $parsedDate = [datetime]::ParseExact($json.CreateDate, "dd MMMM yyyy", $culture)
-                        if ( $filterCB.SelectedItem -like "*$($parsedDate.ToString("MMMM", $culture))*" ) {
-                            [void]$autoticketListViewT.Items.Add($ticket)  
-                            $Global:loadedAutotickets.Add($temp, $_)
+
+                        $tempDate = $json.createDate.split(",").trim()
+
+                        $tempDate | ForEach-Object { 
+                            
+                            $createDate = $_.replace("-", " ");
+
+                            if ( !([string]::IsNullOrEmpty($createDate)) ) {
+                                
+                                $culture = [System.Globalization.CultureInfo]::GetCultureInfo("en-US")
+                                $parsedDate = [datetime]::ParseExact($createDate, "dd MMMM yyyy", $culture)
+
+                                if ( $filterCB.SelectedItem -like "*$($parsedDate.ToString("MMMM", $culture))*" ) {
+                                    [void]$autoticketListViewT.Items.Add($ticket)  
+                                    $Global:loadedAutotickets.Add($temp, $_)
+                                }
+                            }
+                                
                         }
                     }
                 } else {
@@ -1738,12 +1754,12 @@ $inputXML = @"
 }
 
 function createAndUpdateAutoTicket ($switch) {
-    
+
 $inputXML = @"
 <Window x:Class="TicketSystem.NewOrUpdateAutoTicket"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Automatic Ticket" Height="640" Width="720"
+        Title="Automatic Ticket" Height="660" Width="720"
         Background="#ECEFF1"
         WindowStartupLocation="CenterScreen">
 
@@ -1757,9 +1773,20 @@ $inputXML = @"
                 <TextBox Name="issueT" Height="32" FontSize="14" Padding="6" Margin="0,0,0,12" Background="#FAFAFA" BorderBrush="#B0BEC5"/>
 
                 <StackPanel Orientation="Horizontal" Margin="0,0,0,10" VerticalAlignment="Center">
-                    <TextBlock Name="createDateT" Text="Create date: Not set" FontSize="14" Foreground="#455A64" VerticalAlignment="Center"/>
+                    <TextBlock Name="createDateT" Text="Deadline:" FontSize="14" Foreground="#455A64" VerticalAlignment="Center"/>
+                    <ComboBox Name="createDateCB" Width="120" Margin="10,0,0,0" FontSize="13" Background="#FAFAFA" BorderBrush="#B0BEC5" />
                     <Button Name="createDateB" Content="Add" Width="80" Height="26" FontSize="12" Margin="10,0,0,0" Background="#90CAF9" Foreground="Black" BorderBrush="Transparent"/>
+                    <Button Name="deleteDeadlineB" Content="Delete" Width="60" FontSize="12" Height="24" Margin="5,0,0,0" Background="#FFEFDE9A" BorderBrush="Transparent"/>
                     <Button Name="resetCreateDateB" Content="Reset" Width="60" FontSize="12" Height="24" Margin="5,0,0,0" Background="#EF9A9A" BorderBrush="Transparent"/>
+                </StackPanel>
+
+                <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                    <TextBlock Text="Priority:" FontSize="14" Foreground="#455A64" VerticalAlignment="Center"/>
+                    <ComboBox Name="prioCB" Margin="10,0,0,0">
+                        <ComboBoxItem Content="Prio 1" IsSelected="True"/>
+                        <ComboBoxItem Content="Prio 2"/>
+                        <ComboBoxItem Content="Prio 3"/>
+                    </ComboBox>
                 </StackPanel>
 
                 <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
@@ -1789,7 +1816,7 @@ $inputXML = @"
                 </StackPanel>
 
                 <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
-                    <TextBlock Name="DeadlineT" Text="Deadline: Not set" FontSize="14" Foreground="#455A64" VerticalAlignment="Center"/>
+                    <TextBlock Name="deadlineT" Text="Deadline: Not set" FontSize="14" Foreground="#455A64" VerticalAlignment="Center"/>
                     <Button Name="deadlineB" Content="Add" Width="80" FontSize="12" Height="24" Margin="10,0,0,0" Background="#A5D6A7" BorderBrush="Transparent"/>
                     <Button Name="resetDeadlineB" Content="Reset" Width="60" FontSize="12" Height="24" Margin="5,0,0,0" Background="#EF9A9A" BorderBrush="Transparent"/>
                 </StackPanel>
@@ -1830,21 +1857,24 @@ $inputXML = @"
         $ticketNameT = $Window.FindName("ticketNameT")
         $statusCB = $Window.FindName("statusCB")
         $statusT = $Window.FindName("statusT")
-        $DeadlineT = $Window.FindName("DeadlineT")
-        $DeadlineB = $Window.FindName("deadlineB")
+        $deadlineT = $Window.FindName("deadlineT")
+        $deadlineB = $Window.FindName("deadlineB")
         $resetDeadlineB = $Window.FindName("resetDeadlineB")
         $createDateT = $Window.FindName("createDateT")
+        $createDateCB = $Window.FindName("createDateCB")
         $createDateB = $Window.FindName("createDateB")
+        $deleteCreateDateB = $Window.FindName("deleteDeadlineB")
         $resetCreateDateB = $Window.FindName("resetCreateDateB")
         $userT = $Window.FindName("userT")
         $selectUserCB = $Window.FindName("selectUserCB")
+
+        $prioCB = $Window.FindName("prioCB")
     }
     catch {
         Write-Warning $_.Exception
         throw
     }
 
-    
     $Global:dateTime = ""
     
     $ticketOwners = Get-Content -Path "$Global:Path\owners.json" | ConvertFrom-Json
@@ -1887,12 +1917,15 @@ $inputXML = @"
             $statusT.Text = $desiredStatus
         }
         
-        if ( !($Global:loadedAutoticket.createDate -eq $null -or $Global:loadedAutoticket.createDate -eq "") ) {
-            $createDateT.Text = "Create Date: $($Global:loadedAutoticket.createDate)"
-        } else {
-            $DeadlineT.Text = "Create Date: Not set"
-        }
-           
+        #if ( !($Global:loadedAutoticket.createDate -eq $null -or $Global:loadedAutoticket.createDate -eq "") ) {
+        #    $createDateT.Text = "Create Date: $($Global:loadedAutoticket.createDate)"
+        #} else {
+        #    $createDateT.Text = "Create Date: Not set"
+        #}
+
+        $createDates = $Global:loadedAutoticket.createDate.split(",").trim()
+        $createDates | ForEach-Object { $temp = $_.replace("-", " "); $createDateCB.Items.add($_) }
+ 
         if ( !($Global:loadedAutoticket.deadLine -eq $null -or $Global:loadedAutoticket.deadLine -eq "") ) {
             $DeadlineT.Text = "Deadline: $($Global:loadedAutoticket.deadLine)"
         } else {
@@ -1914,7 +1947,7 @@ $inputXML = @"
             $item | Add-Member -type NoteProperty -Name 'Name' -Value $userT.Text
             $item | Add-Member -type NoteProperty -Name 'Update' -Value ""
             $item | Add-Member -type NoteProperty -Name 'Username' -Value $env:USERNAME
-            $item | Add-Member -type NoteProperty -Name 'Prio' -Value "Prio 1"
+            $item | Add-Member -type NoteProperty -Name 'Prio' -Value $prioCB.SelectionBoxItem
             if ( !($statusCB.SelectionBoxItem -eq "Not set") ) {
                 $item | Add-Member -type NoteProperty -Name 'Status' -Value $statusCB.SelectionBoxItem     
             } else {
@@ -1927,8 +1960,14 @@ $inputXML = @"
             } else {
                 $item | Add-Member -type NoteProperty -Name 'deadLine' -Value $DeadlineT.Text.replace("Deadline: ", "")
             }
+            
+            #$item | Add-Member -type NoteProperty -Name 'createDate' -Value $createDateT.Text.replace("Create Date: ", "")
+            
+            $tempCreateDate = ""
+            $createDateCB.Items | ForEach-Object { $temp = $_.replace(" ","-"); $tempCreateDate += "$temp," }
+            $item | Add-Member -type NoteProperty -Name 'createDate' -Value $tempCreateDate 
 
-            $item | Add-Member -type NoteProperty -Name 'createDate' -Value $createDateT.Text.replace("Create Date: ", "")
+
             $item | ConvertTo-Json | Out-File -FilePath "$Global:autoTickets\$($filtertitle).json" -Force
 
         } else {
@@ -1959,11 +1998,17 @@ $inputXML = @"
             } 
             $item | Add-Member -type NoteProperty -Name 'ID' -Value $Global:loadedAutoticket.id 
             
+            
             if ( $DeadlineT.Text -eq "Deadline: Not set" ) {
                 $item | Add-Member -type NoteProperty -Name 'deadLine' -Value ""
             } else {
                 $item | Add-Member -type NoteProperty -Name 'deadLine' -Value $DeadlineT.Text.replace("Deadline: ", "")
             }
+            
+            $tempCreateDate = ""
+            $createDateCB.Items | ForEach-Object { $temp = $_.replace(" ","-"); $tempCreateDate += "$temp," }
+            $item | Add-Member -type NoteProperty -Name 'createDate' -Value $tempCreateDate 
+
             $item | Add-Member -type NoteProperty -Name 'createDate' -Value $createDateT.Text.replace("Create Date: ", "")
 
             $item | ConvertTo-Json | Out-File -FilePath "$Global:autoTickets\$($filtertitle).json" -Force
@@ -1990,23 +2035,33 @@ $inputXML = @"
 
     $createDateB.Add_Click({
         calender
-        $createDateT.Text = "Create Date: $($Global:dateTime)"
+        #$createDateT.Text = "Create Date: $($Global:dateTime)"
+        $createDateCB.Items.add($Global:dateTime)
+        $createDateCB.SelectedIndex = $createDateCB.Items.Count - 1
+        
         $Global:dateTime = ""
     })
 
     $deadlineB.Add_Click({
         calender
-        $DeadlineT.Text = "Deadline: $($Global:dateTime)"
+        $deadlineT.Text = "Deadline: $($Global:dateTime)"
         $Global:dateTime = ""
     })
 
+
     $resetDeadlineB.Add_Click({
-        $DeadlineT.Text = "Deadline: Not set"
+        $deadlineT.Text = "Deadline: Not set"
         $Global:dateTime = ""
+    })
+
+    $deleteCreateDateB.Add_Click({
+
+        $createDateCB.Items.Remove($createDateCB.SelectedItem)
     })
 
     $resetCreateDateB.Add_Click({
-        $createDateT.Text = "Create Date: Not set"
+        #$createDateT.Text = "Create Date: Not set"
+        $createDateCB.items.Clear()
         $Global:dateTime = ""
     })
 
@@ -2427,6 +2482,9 @@ function createTicketOnDate () {
 
                 $culture = [System.Globalization.CultureInfo]::GetCultureInfo("en-US")
 
+                <#
+                 # Before multidate
+
                 $date = [datetime]::ParseExact($json.createDate, "dd MMMM yyyy", $culture)
                 $createDate = $date
                 $currentDate = Get-Date
@@ -2437,6 +2495,40 @@ function createTicketOnDate () {
                 
                     if ( !($json.ID -contains $allIDs) ) { 
                         Copy-Item -Path $_ -Destination $Global:prio1  
+                    }
+                }
+                #>
+
+                $tempDate = $json.createDate.split(",").trim()
+                $tempDate | ForEach-Object { 
+    
+                    $createDate = $_.replace("-", " "); 
+
+                    if ( !([string]::IsNullOrEmpty($createDate)) ) {
+
+                        $date = [datetime]::ParseExact($createDate, "dd MMMM yyyy", $culture)
+                        $createDate = $date
+                        $currentDate = Get-Date
+                        
+                        $limit = ($createDate - $currentDate).Days
+                        
+                        if ( $limit -ge 0 -or $limit -le 0 ) {
+                
+                            if ( !($json.ID -contains $allIDs) ) { 
+                            
+                                $json.createDate = $createDate.ToString("yyyy-MM-dd")
+                                #$json | ConvertTo-Json | out-file -FilePath "$Global:prio1\$($json.title).json" -Force  
+                                
+                                if ( $prioCB.SelectionBoxItem -eq "Prio 1" ) {
+                                    $json | ConvertTo-Json | out-file -FilePath "$Global:prio1\$($json.title).json" -Force  
+                                } elseif ( $prioCB.SelectionBoxItem -eq "Prio 2" ) {
+
+                                    $json | ConvertTo-Json | out-file -FilePath "$Global:prio2\$($json.title).json" -Force  
+                                } elseif ( $prioCB.SelectionBoxItem -eq "Prio 3" ) {
+                                    $json | ConvertTo-Json | out-file -FilePath "$Global:prio3\$($json.title).json" -Force  
+                                } 
+                            }
+                        }
                     }
                 }
             }
