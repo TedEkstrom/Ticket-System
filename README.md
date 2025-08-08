@@ -5,16 +5,19 @@ This is a simple ticket system where you can submit and read submitted tickets. 
 The ticket system consists of two different applications; ReadTickets and Maketicket. Just as the names suggest, MakeTicket is used to submit tickets and ReadTickets is used to read and manage them.
 
 
-![image](https://github.com/user-attachments/assets/1c6df060-3aab-4fdb-8d52-07806130e382)
+![image](https://github.com/user-attachments/assets/8a78f5e1-93a4-41d1-b3fd-c81a52c9f902)
 
 
 In settings you can set where it should retrieve its tickets (of course in the same place they are sent from MakeTicket) but you can also choose users. Of course you have to choose where to retrieve your tickets for it to work correctly. In some cases you need to restart it.
 
-![image](https://github.com/user-attachments/assets/e4f0a409-653c-455f-9231-a7772528bb49)
+Automatic tickets is used to create recurring tickets. You set when they should be created and they will be created at that time.
+
+![image](https://github.com/user-attachments/assets/ccc0f3fb-1a03-4998-96eb-01c576d7e940)
 
 
 The MakeTicket.dat file is for MakeTicket and must be placed in the same folder. This is how you tell the application where to place the new tickets, for example \\\192.168.1.19\tickets.
 
+![image](https://github.com/user-attachments/assets/e4f0a409-653c-455f-9231-a7772528bb49)
 
 More admin users
 
