@@ -247,6 +247,13 @@ $inputXML = @"
                                 </DataTemplate>
                             </GridViewColumn.CellTemplate>
                         </GridViewColumn>
+                        <GridViewColumn Header="Recurrent" Width="80">
+                            <GridViewColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding Recurrent}" TextAlignment="Center" />
+                                </DataTemplate>
+                            </GridViewColumn.CellTemplate>
+                        </GridViewColumn>
                     </GridView>
                 </ListView.View>
             </ListView>
@@ -459,14 +466,29 @@ function scanJsonFiles ( $switch, $temp, $json) {
             DeadLine = $json.deadLine
         }
     } else {
-        $ticket = New-Object PSObject -Property @{
-        ticketName = $temp
-        Status = $json.status
-        Priority = $json.prio
-        ReportedBy = $json.username
-        Date = $json.date
-        AssignedTO = $json.ticketOwner
-        DeadLine = $json.deadLine
+
+        if ( [string]::IsNullOrEmpty($json.id) ) {
+
+            $ticket = New-Object PSObject -Property @{
+            ticketName = $temp
+            Status = $json.status
+            Priority = $json.prio
+            ReportedBy = $json.username
+            Date = $json.date
+            AssignedTO = $json.ticketOwner
+            DeadLine = $json.deadLine
+            }
+        } else {
+            $ticket = New-Object PSObject -Property @{
+            ticketName = $temp
+            Status = $json.status
+            Priority = $json.prio
+            ReportedBy = $json.username
+            Date = $json.date
+            AssignedTO = $json.ticketOwner
+            DeadLine = $json.deadLine
+            Recurrent = "X"
+            }
         }
     }
 
@@ -2350,7 +2372,7 @@ $inputXML = @"
 $Timer1 = New-Object System.Windows.Threading.DispatcherTimer
 $Timer1.Interval = [TimeSpan]::FromSeconds(2)
 
-$Timer1.add_Tick({
+function addColor () {
 
     if ( !$notsolvedR.IsChecked -or $solvedR.IsChecked ) {
 
@@ -2382,9 +2404,18 @@ $Timer1.add_Tick({
                     }
                 }
             }
+            if ( ![string]::IsNullOrEmpty($item.Recurrent) ) {
+                $container = $tickets.ItemContainerGenerator.ContainerFromItem($item)
+                if ( $container -ne $null ) { Write-Host "#2"
+                    $color = [System.Windows.Media.Color]::FromRgb(252, 230, 211) # Orange 250, 140, 39                      
+                    $brush = New-Object System.Windows.Media.SolidColorBrush($color)
+                    $container.Background = $brush
+                }
+            }
         } 
     }
-})
+}
+$Timer1.add_Tick({paintColor})
 
 $Timer1.Start()
 
@@ -2519,13 +2550,13 @@ function createTicketOnDate () {
                                 $json.createDate = $createDate.ToString("yyyy-MM-dd")
                                 #$json | ConvertTo-Json | out-file -FilePath "$Global:prio1\$($json.title).json" -Force  
                                 
-                                if ( $prioCB.SelectionBoxItem -eq "Prio 1" ) {
-                                    $json | ConvertTo-Json | out-file -FilePath "$Global:prio1\$($json.title).json" -Force  
-                                } elseif ( $prioCB.SelectionBoxItem -eq "Prio 2" ) {
+                                if ( $json.prio -eq "Prio 1" ) {
+                                    $json | ConvertTo-Json | out-file -FilePath "$Global:prio1\$($json.title).json"
+                                } elseif ( $json.prio -eq "Prio 2" ) {
 
-                                    $json | ConvertTo-Json | out-file -FilePath "$Global:prio2\$($json.title).json" -Force  
-                                } elseif ( $prioCB.SelectionBoxItem -eq "Prio 3" ) {
-                                    $json | ConvertTo-Json | out-file -FilePath "$Global:prio3\$($json.title).json" -Force  
+                                    $json | ConvertTo-Json | out-file -FilePath "$Global:prio2\$($json.title).json"
+                                } elseif ( $json.prio -eq "Prio 3" ) {
+                                    $json | ConvertTo-Json | out-file -FilePath "$Global:prio3\$($json.title).json"
                                 } 
                             }
                         }
