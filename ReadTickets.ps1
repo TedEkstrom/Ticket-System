@@ -79,7 +79,7 @@ $inputXML = @"
 
             <!-- Sidebar -->
             <StackPanel DockPanel.Dock="Left" Width="200" Background="#EEE">
-                <Button Content="Automatic Ticket" Name="autoTicketB" Margin="5" Padding="0"
+                <Button Content="Schedule Ticket" Name="autoTicketB" Margin="5" Padding="0"
                         Background="#007ACC" Foreground="White"
                         FontWeight="Bold" BorderBrush="Transparent"
                         Width="180" Height="30"
@@ -1555,7 +1555,7 @@ $inputXML = @"
 <Window x:Class="TicketSystem.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="List over automatic tickets" Height="600" Width="900" UseLayoutRounding="True">
+        Title="List over schedule tickets" Height="600" Width="900" UseLayoutRounding="True">
     <Grid>
         <DockPanel LastChildFill="True">
 
@@ -1596,7 +1596,7 @@ $inputXML = @"
                             FontWeight="Bold" BorderBrush="Transparent"
                             Width="100" Height="25" Cursor="Hand"/>
 
-                            <Button Content="New Automatic Ticket" Name="newAutoTicketB" Margin="10,0,0,0" Padding="0"
+                            <Button Content="New Schedule Ticket" Name="newAutoTicketB" Margin="10,0,0,0" Padding="0"
                             Background="#3498DB" Foreground="White"
                             FontWeight="Bold" BorderBrush="Transparent"
                             Width="140" Height="25" Cursor="Hand"/>
@@ -1781,7 +1781,7 @@ $inputXML = @"
 <Window x:Class="TicketSystem.NewOrUpdateAutoTicket"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Automatic Ticket" Height="660" Width="720"
+        Title="Schedule Ticket" Height="660" Width="720"
         Background="#ECEFF1"
         WindowStartupLocation="CenterScreen">
 
@@ -1795,7 +1795,7 @@ $inputXML = @"
                 <TextBox Name="issueT" Height="32" FontSize="14" Padding="6" Margin="0,0,0,12" Background="#FAFAFA" BorderBrush="#B0BEC5"/>
 
                 <StackPanel Orientation="Horizontal" Margin="0,0,0,10" VerticalAlignment="Center">
-                    <TextBlock Name="createDateT" Text="Deadline:" FontSize="14" Foreground="#455A64" VerticalAlignment="Center"/>
+                    <TextBlock Name="createDateT" Text="Create date:" FontSize="14" Foreground="#455A64" VerticalAlignment="Center"/>
                     <ComboBox Name="createDateCB" Width="120" Margin="10,0,0,0" FontSize="13" Background="#FAFAFA" BorderBrush="#B0BEC5" />
                     <Button Name="createDateB" Content="Add" Width="80" Height="26" FontSize="12" Margin="10,0,0,0" Background="#90CAF9" Foreground="Black" BorderBrush="Transparent"/>
                     <Button Name="deleteDeadlineB" Content="Delete" Width="60" FontSize="12" Height="24" Margin="5,0,0,0" Background="#FFEFDE9A" BorderBrush="Transparent"/>
@@ -1907,7 +1907,7 @@ $inputXML = @"
 
     if ( $switch -eq "Update" ) {
 
-        $headerT.Text = "Update Automatic Tickets"
+        $headerT.Text = "Update schedule Tickets"
         $newTicketB.Content = "Update"
   
         $issueT.Text = $Global:loadedAutoticket.title
@@ -2415,7 +2415,7 @@ function addColor () {
         } 
     }
 }
-$Timer1.add_Tick({paintColor})
+$Timer1.add_Tick({addColor})
 
 $Timer1.Start()
 
