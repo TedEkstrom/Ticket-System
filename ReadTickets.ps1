@@ -828,6 +828,9 @@ $inputXML = @"
                 $item | Add-Member -type NoteProperty -Name 'ticketOwner' -Value $Global:ticketOwner
             }
             $item | Add-Member -type NoteProperty -Name 'Status' -Value $global:LoadedTicket.SelectedItem
+
+            $item | Add-Member -type NoteProperty -Name 'id' -Value $global:LoadedTicket.id
+
             $global:loadedticket =  $item
 
             $SelectedItem = $Tickets.SelectedItems.Text
@@ -870,6 +873,8 @@ function resetTicketOwner () {
         $item | Add-Member -type NoteProperty -Name 'Prio' -Value $global:LoadedTicket.Prio
         $item | Add-Member -type NoteProperty -Name 'ticketOwner' -Value ""
         $item | Add-Member -type NoteProperty -Name 'Status' -Value $global:LoadedTicket.Status
+
+        $item | Add-Member -type NoteProperty -Name 'id' -Value $global:LoadedTicket.id
         $global:loadedticket =  $item
 
         $SelectedItem = $Tickets.SelectedItems.Text
@@ -1116,7 +1121,7 @@ $inputXML = @"
     } else {
         $DeadlineT.Text = "Deadline: Not set"
     }
-    
+
     $closeB.Add_Click({
 
         $fileToWrite = $global:loadedtickets[$global:LastSelectTicket.ticketName]
@@ -1138,7 +1143,14 @@ $inputXML = @"
         } else {
             $item | Add-Member -type NoteProperty -Name 'Status' -Value $statusT.Text
         }
-        $item | Add-Member -type NoteProperty -Name 'deadLine' -Value $Global:dateTime
+        if ( ![string]::IsNullOrEmpty($Global:dateTime) ) {
+            $item | Add-Member -type NoteProperty -Name 'deadLine' -Value $Global:dateTime
+        } else {
+            $item | Add-Member -type NoteProperty -Name 'deadLine' -Value $global:LoadedTicket.deadLine
+        }
+
+        $item | Add-Member -type NoteProperty -Name 'id' -Value $global:LoadedTicket.id
+
         $global:loadedticket =  $item
 
         saveChanges
@@ -1188,8 +1200,10 @@ $inputXML = @"
             $item | Add-Member -type NoteProperty -Name 'Username' -Value $global:LoadedTicket.Username
             $item | Add-Member -type NoteProperty -Name 'Prio' -Value $global:LoadedTicket.Prio
             $item | Add-Member -type NoteProperty -Name 'Status' -Value $global:LoadedTicket.Status
-            $item | Add-Member -type NoteProperty -Name 'deadLine' -Value $global:loadedtickets.deadLine
+            $item | Add-Member -type NoteProperty -Name 'deadLine' -Value $global:LoadedTicket.deadLine
             $item | Add-Member -type NoteProperty -Name 'ticketOwner' -Value $global:LoadedTicket.ticketOwner
+
+            $item | Add-Member -type NoteProperty -Name 'id' -Value $global:LoadedTicket.id
 
             $global:loadedticket =  $item
 
