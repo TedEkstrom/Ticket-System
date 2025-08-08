@@ -2406,7 +2406,7 @@ function addColor () {
             }
             if ( ![string]::IsNullOrEmpty($item.Recurrent) ) {
                 $container = $tickets.ItemContainerGenerator.ContainerFromItem($item)
-                if ( $container -ne $null ) { Write-Host "#2"
+                if ( $container -ne $null ) {
                     $color = [System.Windows.Media.Color]::FromRgb(252, 230, 211) # Orange 250, 140, 39                      
                     $brush = New-Object System.Windows.Media.SolidColorBrush($color)
                     $container.Background = $brush
