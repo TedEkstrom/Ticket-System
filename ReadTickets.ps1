@@ -247,6 +247,13 @@ $inputXML = @"
                                 </DataTemplate>
                             </GridViewColumn.CellTemplate>
                         </GridViewColumn>
+                        <GridViewColumn Header="Visible" Width="80">
+                            <GridViewColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding Visible}" TextAlignment="Center" />
+                                </DataTemplate>
+                            </GridViewColumn.CellTemplate>
+                        </GridViewColumn>
                         <GridViewColumn Header="Recurrent" Width="80">
                             <GridViewColumn.CellTemplate>
                                 <DataTemplate>
@@ -477,6 +484,7 @@ function scanJsonFiles ( $switch, $temp, $json) {
             Date = $json.date
             AssignedTO = $json.ticketOwner
             DeadLine = $json.deadLine
+            Visible = $json.visible
             }
         } else {
             $ticket = New-Object PSObject -Property @{
@@ -487,6 +495,7 @@ function scanJsonFiles ( $switch, $temp, $json) {
             Date = $json.date
             AssignedTO = $json.ticketOwner
             DeadLine = $json.deadLine
+            Visible = $json.visible
             Recurrent = "X"
             }
         }
@@ -831,6 +840,8 @@ $inputXML = @"
 
             $item | Add-Member -type NoteProperty -Name 'id' -Value $global:LoadedTicket.id
 
+            $item | Add-Member -type NoteProperty -Name 'id' -Value $global:LoadedTicket.visible
+
             $global:loadedticket =  $item
 
             $SelectedItem = $Tickets.SelectedItems.Text
@@ -875,6 +886,9 @@ function resetTicketOwner () {
         $item | Add-Member -type NoteProperty -Name 'Status' -Value $global:LoadedTicket.Status
 
         $item | Add-Member -type NoteProperty -Name 'id' -Value $global:LoadedTicket.id
+
+        $item | Add-Member -type NoteProperty -Name 'id' -Value $global:LoadedTicket.visible
+
         $global:loadedticket =  $item
 
         $SelectedItem = $Tickets.SelectedItems.Text
@@ -968,7 +982,7 @@ $inputXML = @"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:OpenTicket"
         mc:Ignorable="d"
-        Title="Open ticket" Height="800" Width="800">
+        Title="Open ticket" Height="820" Width="800">
     <Grid>
         <Border Background="White" CornerRadius="10" Padding="10" Margin="20">
             <StackPanel>
@@ -977,6 +991,12 @@ $inputXML = @"
 
                 <TextBlock Name="priorityT" Text="Priority: Missing..." FontSize="16" Foreground="#F39C12" Padding="0,0,0,0" />
 
+                <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+                    <TextBlock Name="visibleT" Text="Visible: Private" FontSize="16"/>
+                    <Button Name="visibleB" Content="Public" Width="60" FontSize="12" 
+                         HorizontalAlignment="Left" Margin="10,0,0,0" Height="20" />
+                </StackPanel>
+                
                 <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
                     <TextBlock Text="Status:" FontSize="16" Foreground="#27AE60" />
                     <ComboBox Name="statusCB"  Width="150" Margin="10,0,15,0">
@@ -1064,6 +1084,9 @@ $inputXML = @"
         $DeadlineT = $Window.FindName("DeadlineT")
         $DeadlineB = $Window.FindName("deadlineB")
         $resetDeadlineB = $Window.FindName("resetDeadlineB")
+
+        $visibleB = $Window.FindName("visibleB")
+        $visibleT = $Window.FindName("visibleT")
     }
     catch {
         Write-Warning $_.Exception
@@ -1110,6 +1133,16 @@ $inputXML = @"
         $priorityT.Foreground.Color = "Darkblue"
     }
 
+    if ( $global:LoadedTicket.visible -eq "Public" ) {
+        
+        $visibleT.Text = "Visible: Public"
+        $visibleB.Content = "Private"
+    } else {
+
+        $visibleT.Text = "Visible: Private"
+        $visibleB.Content = "Public"
+    }
+
     $allUpdatesT.Text = $global:LoadedTicket.update
     
     $allUpdatesT.Dispatcher.InvokeAsync({
@@ -1150,8 +1183,11 @@ $inputXML = @"
         }
 
         $item | Add-Member -type NoteProperty -Name 'id' -Value $global:LoadedTicket.id
+        
+        $item | Add-Member -type NoteProperty -Name 'visible' -Value $visibleT.Text.Replace("Visible: ", "")
 
         $global:loadedticket =  $item
+
 
         saveChanges
         $Window.Hide()
@@ -1204,6 +1240,7 @@ $inputXML = @"
             $item | Add-Member -type NoteProperty -Name 'ticketOwner' -Value $global:LoadedTicket.ticketOwner
 
             $item | Add-Member -type NoteProperty -Name 'id' -Value $global:LoadedTicket.id
+            $item | Add-Member -type NoteProperty -Name 'id' -Value $global:LoadedTicket.visible
 
             $global:loadedticket =  $item
 
@@ -1276,6 +1313,19 @@ $inputXML = @"
     $resetDeadlineB.Add_Click({
         $DeadlineT.Text = "Deadline: Not set"
         $Global:dateTime = ""
+    })
+
+    $visibleB.Add_Click({
+        
+        if ( $visibleB.Content -eq "Public" ) {
+            $visibleB.Content = "Private"
+            $visibleT.Text = "Visible: Public"
+
+        } else {
+            $visibleB.Content = "Public"
+            $visibleT.Text = "Visible: Private"
+        }
+
     })
 
     [Void]$Window.ShowDialog();
