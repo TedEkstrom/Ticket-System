@@ -840,7 +840,7 @@ $inputXML = @"
 
             $item | Add-Member -type NoteProperty -Name 'id' -Value $global:LoadedTicket.id
 
-            $item | Add-Member -type NoteProperty -Name 'id' -Value $global:LoadedTicket.visible
+            $item | Add-Member -type NoteProperty -Name 'visible' -Value $global:LoadedTicket.visible
 
             $global:loadedticket =  $item
 
@@ -887,7 +887,7 @@ function resetTicketOwner () {
 
         $item | Add-Member -type NoteProperty -Name 'id' -Value $global:LoadedTicket.id
 
-        $item | Add-Member -type NoteProperty -Name 'id' -Value $global:LoadedTicket.visible
+        $item | Add-Member -type NoteProperty -Name 'visible' -Value $global:LoadedTicket.visible
 
         $global:loadedticket =  $item
 
@@ -1240,7 +1240,7 @@ $inputXML = @"
             $item | Add-Member -type NoteProperty -Name 'ticketOwner' -Value $global:LoadedTicket.ticketOwner
 
             $item | Add-Member -type NoteProperty -Name 'id' -Value $global:LoadedTicket.id
-            $item | Add-Member -type NoteProperty -Name 'id' -Value $global:LoadedTicket.visible
+            $item | Add-Member -type NoteProperty -Name 'visible' -Value $global:LoadedTicket.visible
 
             $global:loadedticket =  $item
 
