@@ -79,7 +79,7 @@ $inputXML = @"
 
             <!-- Sidebar -->
             <StackPanel DockPanel.Dock="Left" Width="200" Background="#EEE">
-                <Button Content="Automatic Ticket" Name="autoTicketB" Margin="5" Padding="0"
+                <Button Content="Schedule Ticket" Name="autoTicketB" Margin="5" Padding="0"
                         Background="#007ACC" Foreground="White"
                         FontWeight="Bold" BorderBrush="Transparent"
                         Width="180" Height="30"
@@ -244,6 +244,13 @@ $inputXML = @"
                             <GridViewColumn.CellTemplate>
                                 <DataTemplate>
                                     <TextBlock Text="{Binding Date}" TextAlignment="Center" />
+                                </DataTemplate>
+                            </GridViewColumn.CellTemplate>
+                        </GridViewColumn>
+                        <GridViewColumn Header="Visible" Width="80">
+                            <GridViewColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding Visible}" TextAlignment="Center" />
                                 </DataTemplate>
                             </GridViewColumn.CellTemplate>
                         </GridViewColumn>
@@ -477,6 +484,7 @@ function scanJsonFiles ( $switch, $temp, $json) {
             Date = $json.date
             AssignedTO = $json.ticketOwner
             DeadLine = $json.deadLine
+            Visible = $json.visible
             }
         } else {
             $ticket = New-Object PSObject -Property @{
@@ -487,6 +495,7 @@ function scanJsonFiles ( $switch, $temp, $json) {
             Date = $json.date
             AssignedTO = $json.ticketOwner
             DeadLine = $json.deadLine
+            Visible = $json.visible
             Recurrent = "X"
             }
         }
@@ -828,6 +837,11 @@ $inputXML = @"
                 $item | Add-Member -type NoteProperty -Name 'ticketOwner' -Value $Global:ticketOwner
             }
             $item | Add-Member -type NoteProperty -Name 'Status' -Value $global:LoadedTicket.SelectedItem
+
+            $item | Add-Member -type NoteProperty -Name 'id' -Value $global:LoadedTicket.id
+
+            $item | Add-Member -type NoteProperty -Name 'visible' -Value $global:LoadedTicket.visible
+
             $global:loadedticket =  $item
 
             $SelectedItem = $Tickets.SelectedItems.Text
@@ -870,6 +884,11 @@ function resetTicketOwner () {
         $item | Add-Member -type NoteProperty -Name 'Prio' -Value $global:LoadedTicket.Prio
         $item | Add-Member -type NoteProperty -Name 'ticketOwner' -Value ""
         $item | Add-Member -type NoteProperty -Name 'Status' -Value $global:LoadedTicket.Status
+
+        $item | Add-Member -type NoteProperty -Name 'id' -Value $global:LoadedTicket.id
+
+        $item | Add-Member -type NoteProperty -Name 'visible' -Value $global:LoadedTicket.visible
+
         $global:loadedticket =  $item
 
         $SelectedItem = $Tickets.SelectedItems.Text
@@ -963,7 +982,7 @@ $inputXML = @"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:OpenTicket"
         mc:Ignorable="d"
-        Title="Open ticket" Height="800" Width="800">
+        Title="Open ticket" Height="820" Width="800">
     <Grid>
         <Border Background="White" CornerRadius="10" Padding="10" Margin="20">
             <StackPanel>
@@ -972,6 +991,12 @@ $inputXML = @"
 
                 <TextBlock Name="priorityT" Text="Priority: Missing..." FontSize="16" Foreground="#F39C12" Padding="0,0,0,0" />
 
+                <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+                    <TextBlock Name="visibleT" Text="Visible: Private" FontSize="16"/>
+                    <Button Name="visibleB" Content="Public" Width="60" FontSize="12" 
+                         HorizontalAlignment="Left" Margin="10,0,0,0" Height="20" />
+                </StackPanel>
+                
                 <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
                     <TextBlock Text="Status:" FontSize="16" Foreground="#27AE60" />
                     <ComboBox Name="statusCB"  Width="150" Margin="10,0,15,0">
@@ -1059,6 +1084,9 @@ $inputXML = @"
         $DeadlineT = $Window.FindName("DeadlineT")
         $DeadlineB = $Window.FindName("deadlineB")
         $resetDeadlineB = $Window.FindName("resetDeadlineB")
+
+        $visibleB = $Window.FindName("visibleB")
+        $visibleT = $Window.FindName("visibleT")
     }
     catch {
         Write-Warning $_.Exception
@@ -1105,6 +1133,16 @@ $inputXML = @"
         $priorityT.Foreground.Color = "Darkblue"
     }
 
+    if ( $global:LoadedTicket.visible -eq "Public" ) {
+        
+        $visibleT.Text = "Visible: Public"
+        $visibleB.Content = "Private"
+    } else {
+
+        $visibleT.Text = "Visible: Private"
+        $visibleB.Content = "Public"
+    }
+
     $allUpdatesT.Text = $global:LoadedTicket.update
     
     $allUpdatesT.Dispatcher.InvokeAsync({
@@ -1116,7 +1154,7 @@ $inputXML = @"
     } else {
         $DeadlineT.Text = "Deadline: Not set"
     }
-    
+
     $closeB.Add_Click({
 
         $fileToWrite = $global:loadedtickets[$global:LastSelectTicket.ticketName]
@@ -1138,8 +1176,18 @@ $inputXML = @"
         } else {
             $item | Add-Member -type NoteProperty -Name 'Status' -Value $statusT.Text
         }
-        $item | Add-Member -type NoteProperty -Name 'deadLine' -Value $Global:dateTime
+        if ( ![string]::IsNullOrEmpty($Global:dateTime) ) {
+            $item | Add-Member -type NoteProperty -Name 'deadLine' -Value $Global:dateTime
+        } else {
+            $item | Add-Member -type NoteProperty -Name 'deadLine' -Value $global:LoadedTicket.deadLine
+        }
+
+        $item | Add-Member -type NoteProperty -Name 'id' -Value $global:LoadedTicket.id
+        
+        $item | Add-Member -type NoteProperty -Name 'visible' -Value $visibleT.Text.Replace("Visible: ", "")
+
         $global:loadedticket =  $item
+
 
         saveChanges
         $Window.Hide()
@@ -1188,8 +1236,11 @@ $inputXML = @"
             $item | Add-Member -type NoteProperty -Name 'Username' -Value $global:LoadedTicket.Username
             $item | Add-Member -type NoteProperty -Name 'Prio' -Value $global:LoadedTicket.Prio
             $item | Add-Member -type NoteProperty -Name 'Status' -Value $global:LoadedTicket.Status
-            $item | Add-Member -type NoteProperty -Name 'deadLine' -Value $global:loadedtickets.deadLine
+            $item | Add-Member -type NoteProperty -Name 'deadLine' -Value $global:LoadedTicket.deadLine
             $item | Add-Member -type NoteProperty -Name 'ticketOwner' -Value $global:LoadedTicket.ticketOwner
+
+            $item | Add-Member -type NoteProperty -Name 'id' -Value $global:LoadedTicket.id
+            $item | Add-Member -type NoteProperty -Name 'visible' -Value $global:LoadedTicket.visible
 
             $global:loadedticket =  $item
 
@@ -1262,6 +1313,19 @@ $inputXML = @"
     $resetDeadlineB.Add_Click({
         $DeadlineT.Text = "Deadline: Not set"
         $Global:dateTime = ""
+    })
+
+    $visibleB.Add_Click({
+        
+        if ( $visibleB.Content -eq "Public" ) {
+            $visibleB.Content = "Private"
+            $visibleT.Text = "Visible: Public"
+
+        } else {
+            $visibleB.Content = "Public"
+            $visibleT.Text = "Visible: Private"
+        }
+
     })
 
     [Void]$Window.ShowDialog();
@@ -1555,7 +1619,7 @@ $inputXML = @"
 <Window x:Class="TicketSystem.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="List over automatic tickets" Height="600" Width="900" UseLayoutRounding="True">
+        Title="List over schedule tickets" Height="600" Width="900" UseLayoutRounding="True">
     <Grid>
         <DockPanel LastChildFill="True">
 
@@ -1591,20 +1655,27 @@ $inputXML = @"
             <!-- Knappar längst ner -->
             <StackPanel DockPanel.Dock="Bottom" Background="white" Margin="10">
                 <WrapPanel>
+
                     <Button Content="OK" Name="okB" Margin="10,0,0,0" Padding="0"
                             Background="#3498DB" Foreground="White"
                             FontWeight="Bold" BorderBrush="Transparent"
                             Width="100" Height="25" Cursor="Hand"/>
 
-                            <Button Content="New Automatic Ticket" Name="newAutoTicketB" Margin="10,0,0,0" Padding="0"
+                    <Button Content="New Schedule Ticket" Name="newAutoTicketB" Margin="10,0,0,0" Padding="0"
                             Background="#3498DB" Foreground="White"
                             FontWeight="Bold" BorderBrush="Transparent"
                             Width="140" Height="25" Cursor="Hand"/>
+
+                    <Button Content="Import tickets" Name="importB" Margin="10,0,0,0" Padding="0"
+                            Background="#3498DB" Foreground="White"
+                            FontWeight="Bold" BorderBrush="Transparent"
+                            Width="100" Height="25" Cursor="Hand"/>
 
                     <Button Content="Delete ticket" Name="deleteB" Margin="10,0,0,0" Padding="0"
                             Background="#FF975252" Foreground="White"
                             FontWeight="Bold" BorderBrush="Transparent"
                             Width="100" Height="25" Cursor="Hand"/>
+
                 </WrapPanel>
             </StackPanel>
 
@@ -1675,6 +1746,7 @@ $inputXML = @"
         $okB = $Window.FindName("okB")
         $newAutoTicketB = $Window.FindName("newAutoTicketB")
         $deleteB = $Window.FindName("deleteB")
+        $importB = $Window.FindName("importB")
         $autoticketListViewT = $Window.FindName("autoticketListViewT")
     }
 
@@ -1768,6 +1840,56 @@ $inputXML = @"
         updateAutoTicketList
     })
 
+   $importB.Add_Click({ 
+        
+        $importFile = New-Object windows.forms.openfiledialog   
+        $importFile.initialDirectory = "";   
+        $importFile.title = "Import tickets from schedual"   
+        $importFile.filter = "Schedual|*.xlsx;.csv" 
+        $importFile.ShowDialog() | Out-Null;
+
+        if ( $importFile.FileName -like "*xlsx" ) {
+            
+            # Imports files with Xlsx-format
+            if ( !(Get-module -Name ImportExcel) ) {
+                Install-Module -Name ImportExcel -Scope CurrentUser
+            }
+
+            $data = Import-Excel -Path '.\årsschema - underhåll.xlsx' -WorksheetName 'Uppgifter och datum' # Must be able to choose which sheet.
+        }
+
+        elseif ( $importFile.FileName -like "*csv" ) {
+            
+            # Imports files with CSV-format
+        }
+    
+        $data | ForEach-Object {
+            
+            if ( ![string]::IsNullOrEmpty($_.Moment) ) {
+
+                $filtertitle = $_.Moment.Replace(":", "-")
+                
+                $item = New-Object PSObject
+                $item | Add-Member -type NoteProperty -Name 'Title' -Value $_.Moment
+                $item | Add-Member -type NoteProperty -Name 'Computer' -Value ""
+                $item | Add-Member -type NoteProperty -Name 'Tag' -Value $env:COMPUTERNAME 
+                $item | Add-Member -type NoteProperty -Name 'Date' -Value $_.Start.ToString("dd-MMMM-yyyy", [System.Globalization.CultureInfo]::GetCultureInfo("en-US"))
+                $item | Add-Member -type NoteProperty -Name 'Error' -Value $_.Momentbeskrivning
+                $item | Add-Member -type NoteProperty -Name 'Name' -Value $_.Ansvarig
+                $item | Add-Member -type NoteProperty -Name 'Update' -Value ""
+                $item | Add-Member -type NoteProperty -Name 'Username' -Value $env:USERNAME
+                $item | Add-Member -type NoteProperty -Name 'Prio' -Value $_.Prioritet
+                $item | Add-Member -type NoteProperty -Name 'Status' -Value ""      
+                $item | Add-Member -type NoteProperty -Name 'ID' -Value "$(New-Guid)" 
+                $item | Add-Member -type NoteProperty -Name 'deadLine' -Value $_.Stopp.ToString("dd-MMMM-yyyy", [System.Globalization.CultureInfo]::GetCultureInfo("en-US"))
+                $item | Add-Member -type NoteProperty -Name 'createDate' -Value $_.Start.ToString("dd-MMMM-yyyy", [System.Globalization.CultureInfo]::GetCultureInfo("en-US"))
+                    
+                $item | ConvertTo-Json | Out-File -FilePath "$Global:autoTickets\$($filtertitle).json" -Force     
+            }
+        }
+        updateAutoTicketList
+    })
+
     $filterB.Add_Click({updateAutoTicketList})
 
     $okB.Add_Click({$Window.hide()})
@@ -1781,7 +1903,7 @@ $inputXML = @"
 <Window x:Class="TicketSystem.NewOrUpdateAutoTicket"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Automatic Ticket" Height="660" Width="720"
+        Title="Schedule Ticket" Height="660" Width="720"
         Background="#ECEFF1"
         WindowStartupLocation="CenterScreen">
 
@@ -1795,7 +1917,7 @@ $inputXML = @"
                 <TextBox Name="issueT" Height="32" FontSize="14" Padding="6" Margin="0,0,0,12" Background="#FAFAFA" BorderBrush="#B0BEC5"/>
 
                 <StackPanel Orientation="Horizontal" Margin="0,0,0,10" VerticalAlignment="Center">
-                    <TextBlock Name="createDateT" Text="Deadline:" FontSize="14" Foreground="#455A64" VerticalAlignment="Center"/>
+                    <TextBlock Name="createDateT" Text="Create date:" FontSize="14" Foreground="#455A64" VerticalAlignment="Center"/>
                     <ComboBox Name="createDateCB" Width="120" Margin="10,0,0,0" FontSize="13" Background="#FAFAFA" BorderBrush="#B0BEC5" />
                     <Button Name="createDateB" Content="Add" Width="80" Height="26" FontSize="12" Margin="10,0,0,0" Background="#90CAF9" Foreground="Black" BorderBrush="Transparent"/>
                     <Button Name="deleteDeadlineB" Content="Delete" Width="60" FontSize="12" Height="24" Margin="5,0,0,0" Background="#FFEFDE9A" BorderBrush="Transparent"/>
@@ -1907,7 +2029,7 @@ $inputXML = @"
 
     if ( $switch -eq "Update" ) {
 
-        $headerT.Text = "Update Automatic Tickets"
+        $headerT.Text = "Update schedule Tickets"
         $newTicketB.Content = "Update"
   
         $issueT.Text = $Global:loadedAutoticket.title
@@ -1959,7 +2081,7 @@ $inputXML = @"
         $filtertitle = $issueT.Text.Replace(":", "-")
 
         if ( !$switch -eq "update" ) {
-            ## New auto ticket
+            ## New schedual ticket
             $item = New-Object PSObject
             $item | Add-Member -type NoteProperty -Name 'Title' -Value $issueT.Text
             $item | Add-Member -type NoteProperty -Name 'Computer' -Value ""
@@ -2406,7 +2528,7 @@ function addColor () {
             }
             if ( ![string]::IsNullOrEmpty($item.Recurrent) ) {
                 $container = $tickets.ItemContainerGenerator.ContainerFromItem($item)
-                if ( $container -ne $null ) { Write-Host "#2"
+                if ( $container -ne $null ) {
                     $color = [System.Windows.Media.Color]::FromRgb(252, 230, 211) # Orange 250, 140, 39                      
                     $brush = New-Object System.Windows.Media.SolidColorBrush($color)
                     $container.Background = $brush
@@ -2415,7 +2537,7 @@ function addColor () {
         } 
     }
 }
-$Timer1.add_Tick({paintColor})
+$Timer1.add_Tick({addColor})
 
 $Timer1.Start()
 
