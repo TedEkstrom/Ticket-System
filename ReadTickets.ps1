@@ -1851,7 +1851,7 @@ $inputXML = @"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:WpfApp1"
         mc:Ignorable="d"
-        Title="ConfigureImport" Height="530" Width="420">
+        Title="ConfigureImport" Height="530" Width="600">
     <Grid Margin="40,20,0,20">
         <TextBlock Text="Configure the import" FontSize="20" FontWeight="Bold" Margin="0,0,0,0"/>
         <Grid Margin="20,10,0,10">
@@ -1869,39 +1869,34 @@ $inputXML = @"
             <StackPanel Grid.Row="1" Orientation="Vertical" HorizontalAlignment="Left" Margin="0,30,0,0">
                 <TextBlock Text="Choose which column to link to which label" FontSize="16" FontWeight="Bold" Margin="0,0,0,10"/>
                 <StackPanel Orientation="Horizontal">
-                    <Label Name="labelCB1" Content="Label 1" Margin="5,7,0,0"/>
-                    <ComboBox Name="columnCB1" Width="100" Margin="30,7,0,0"/>
-                    <Label Name="labelL1" Content="label - column" Margin="30,0,0,0"/>
+                    <Label Content="Title" Width="100" Margin="5,7,0,0"/>
+                    <ComboBox Name="titleCB" Width="100" Margin="30,7,0,0"/>
+                    <Label Content="Name of ticket" Margin="30,0,0,0"/>
                 </StackPanel>
                 <StackPanel Orientation="Horizontal">
-                    <Label Name="labelCB2" Content="Label 2" Margin="5,7,0,0"/>
-                    <ComboBox Name="columnCB2" Width="100" Margin="30,7,0,0"/>
-                    <Label Name="labelL2" Content="label - column" Margin="30,0,0,0"/>
+                    <Label Content="Discription" Width="100" Margin="5,7,0,0"/>
+                    <ComboBox Name="errorCB" Width="100" Margin="30,7,0,0"/>
+                    <Label Content="Description of ticket." Margin="30,0,0,0"/>
                 </StackPanel>
                 <StackPanel Orientation="Horizontal">
-                    <Label Name="labelCB3" Content="Label 3" Margin="5,7,0,0"/>
-                    <ComboBox Name="columnCB3" Width="100" Margin="30,7,0,0"/>
-                    <Label Name="labelL3" Content="label - column" Margin="30,0,0,0"/>
+                    <Label Content="Assigned" Width="100" Margin="5,7,0,0"/>
+                    <ComboBox Name="nameCB" Width="100" Margin="30,7,0,0"/>
+                    <Label Content="Person how is assigned to ticket." Margin="30,0,0,0"/>
                 </StackPanel>
                 <StackPanel Orientation="Horizontal">
-                    <Label Name="labelCB4" Content="Label 4" Margin="5,7,0,0"/>
-                    <ComboBox Name="columnCB4" Width="100" Margin="30,7,0,0"/>
-                    <Label Name="labelL4" Content="label - column" Margin="30,0,0,0"/>
+                    <Label Content="Prio" Width="100" Margin="5,7,0,0"/>
+                    <ComboBox Name="prioCB" Width="100" Margin="30,7,0,0"/>
+                    <Label Content="Prio 1, Prio 2 or Prio 3" Margin="30,0,0,0"/>
                 </StackPanel>
                 <StackPanel Orientation="Horizontal">
-                    <Label Name="labelCB5" Content="Label 5" Margin="5,7,0,0"/>
-                    <ComboBox Name="columnCB5" Width="100" Margin="30,7,0,0"/>
-                    <Label Name="labelL5" Content="label - column" Margin="30,0,0,0"/>
+                    <Label Content="CreateDate" Width="100" Margin="5,7,0,0"/>
+                    <ComboBox Name="createDateCB" Width="100" Margin="30,7,0,0"/>
+                    <Label Content="When it should show up in tickets system" Margin="30,0,0,0"/>
                 </StackPanel>
                 <StackPanel Orientation="Horizontal">
-                    <Label Name="labelCB6" Content="Label 6" Margin="5,7,0,0"/>
-                    <ComboBox Name="columnCB6" Width="100" Margin="30,7,0,0"/>
-                    <Label Name="labelL6" Content="label - column" Margin="30,0,0,0"/>
-                </StackPanel>
-                <StackPanel Orientation="Horizontal">
-                    <Label Name="labelCB7" Content="Label 7" Margin="5,7,0,0"/>
-                    <ComboBox Name="columnCB7" Width="100" Margin="30,7,0,0"/>
-                    <Label Name="labelL7" Content="label - column" Margin="30,0,0,0"/>
+                    <Label Content="Deadline" Width="100" Margin="5,7,0,0"/>
+                    <ComboBox Name="deadLineCB" Width="100" Margin="30,7,0,0"/>
+                    <Label Content="DeadLine" Margin="30,0,0,0"/>
                 </StackPanel>
             </StackPanel>
 
@@ -1937,7 +1932,7 @@ $inputXML = @"
             throw
         }        
 
-        $Window.ShowDialog() | Out-Null
+        [Void]$Window.ShowDialog()
    }
 
    $importB.Add_Click({ 
@@ -1974,7 +1969,7 @@ $inputXML = @"
                 $item | Add-Member -type NoteProperty -Name 'Title' -Value $_.Moment
                 $item | Add-Member -type NoteProperty -Name 'Computer' -Value ""
                 $item | Add-Member -type NoteProperty -Name 'Tag' -Value $env:COMPUTERNAME 
-                $item | Add-Member -type NoteProperty -Name 'Date' -Value $_.Start.ToString("dd-MMMM-yyyy", [System.Globalization.CultureInfo]::GetCultureInfo("en-US"))
+                $item | Add-Member -type NoteProperty -Name 'Date' -Value (Get-Date -Format "yymmdd")
                 $item | Add-Member -type NoteProperty -Name 'Error' -Value $_.Momentbeskrivning
                 $item | Add-Member -type NoteProperty -Name 'Name' -Value $_.Ansvarig
                 $item | Add-Member -type NoteProperty -Name 'Update' -Value ""
@@ -1995,7 +1990,7 @@ $inputXML = @"
 
     $okB.Add_Click({$Window.hide()})
 
-    [Void]$Window.ShowDialog();
+    [Void]$Window.ShowDialog()
 }
 
 function createAndUpdateAutoTicket ($switch) {
