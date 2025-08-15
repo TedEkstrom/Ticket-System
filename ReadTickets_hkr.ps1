@@ -1781,7 +1781,8 @@ $inputXML = @"
                     createDate = $tempDate
                 }
 
-                if ( !([string]::IsNullOrEmpty($filterCB.SelectedItem)) ) {                    if ( !([string]::IsNullOrEmpty($json.CreateDate)) ) { 
+                if ( !([string]::IsNullOrEmpty($filterCB.SelectedItem)) ) {
+                    if ( !([string]::IsNullOrEmpty($json.CreateDate)) ) { 
 
                         $tempDate = $json.createDate.split(",").trim()
 
@@ -2766,5 +2767,6 @@ $MainWindow.Add_Closing({
 })
 
 $MainWindow.Add_MouseLeftButtonDown({ $tickets.UnselectAll() })
+
 
 [Void]$MainWindow.ShowDialog()
