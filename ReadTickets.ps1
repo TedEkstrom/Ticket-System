@@ -1675,7 +1675,6 @@ $inputXML = @"
                             Background="#FF975252" Foreground="White"
                             FontWeight="Bold" BorderBrush="Transparent"
                             Width="100" Height="25" Cursor="Hand"/>
-
                 </WrapPanel>
             </StackPanel>
 
@@ -1839,9 +1838,8 @@ $inputXML = @"
         $filterCB.SelectedItem = $null 
         updateAutoTicketList
     })
-
-
-   function configureImport ($switch) {
+    
+   function configureImport ($importFile) {
 
 $inputXML = @"
 <Window x:Class="WpfApp1.ConfigureImport"
@@ -1923,15 +1921,54 @@ $inputXML = @"
         $reader = (New-Object System.Xml.XmlNodeReader $xaml)
         try {
             $Window = [Windows.Markup.XamlReader]::Load( $reader )
-            #$clearB = $Window.FindName("clearB")
-            
+
+            $global:columnCB = $Window.FindName("columnCB")
+            $global:titleCB = $Window.FindName("titleCB")
+            $global:errorCB = $Window.FindName("errorCB")
+            $global:nameCB = $Window.FindName("nameCB")
+            $global:prioCB = $Window.FindName("prioCB")
+            $global:createDateCB = $Window.FindName("createDateCB")
+            $global:deadLineCB = $Window.FindName("deadLineCB")
+            $okB = $Window.FindName("okB")
+            $cancelB = $Window.FindName("cancelB")   
         }
 
         catch {
             Write-Warning $_.Exception
             throw
-        }        
+        } 
 
+        $sheets = (Get-ExcelSheetInfo -Path $importFile).Name
+
+        $sheets | ForEach-Object { $columnCB.Items.Add($_) }
+            
+        $columnCB.Add_SelectionChanged({
+            
+            $columns = (Import-Excel -Path $importFile -WorksheetName $columnCB.SelectedItem)[0]
+            $columns = $columns | get-member -MemberType NoteProperty | Select-Object -ExpandProperty Name
+
+
+            $columns | ForEach-Object {
+            
+                $titleCB.Items.Add($_)
+                $errorCB.Items.Add($_)
+                $nameCB.Items.Add($_)
+                $prioCB.Items.Add($_)
+                $createDateCB.Items.Add($_)
+                $deadLineCB.Items.Add($_)
+            }            
+        })
+
+        $okB.Add_Click({
+        
+            $Window.Close()
+        })
+
+        $cancelB.Add_Click({
+            
+            ## Sätt ett värde som falskt som används för att avsluta importeringen!
+        })
+        
         [Void]$Window.ShowDialog()
    }
 
@@ -1950,7 +1987,8 @@ $inputXML = @"
                 Install-Module -Name ImportExcel -Scope CurrentUser
             }
 
-            $data = Import-Excel -Path '.\årsschema - underhåll.xlsx' -WorksheetName 'Uppgifter och datum' # Must be able to choose which sheet.
+            configureImport -importFile $importFile
+            Import-Excel -Path $importFile -WorksheetName $columnCB.SelectedItem
         }
 
         elseif ( $importFile.FileName -like "*csv" ) {
@@ -1958,29 +1996,40 @@ $inputXML = @"
             # Imports files with CSV-format
         }
 
-    
         $data | ForEach-Object {
             
             if ( ![string]::IsNullOrEmpty($_.Moment) ) {
+                
+                ## Använd detta värde för att sätt på vilka kolumner den väljer.
+                <#    
+                    $global:titleCB
+                    $global:errorCB
+                    $global:nameCB
+                    $global:prioCB
+                    $global:createDateCB
+                    $global:deadLineCB
+                #>
 
                 $filtertitle = $_.Moment.Replace(":", "-")
                 
                 $item = New-Object PSObject
-                $item | Add-Member -type NoteProperty -Name 'Title' -Value $_.Moment
+                $item | Add-Member -type NoteProperty -Name 'Title' -Value $_.$global:titleCB.SelectedItem
                 $item | Add-Member -type NoteProperty -Name 'Computer' -Value ""
                 $item | Add-Member -type NoteProperty -Name 'Tag' -Value $env:COMPUTERNAME 
                 $item | Add-Member -type NoteProperty -Name 'Date' -Value (Get-Date -Format "yymmdd")
-                $item | Add-Member -type NoteProperty -Name 'Error' -Value $_.Momentbeskrivning
-                $item | Add-Member -type NoteProperty -Name 'Name' -Value $_.Ansvarig
+                $item | Add-Member -type NoteProperty -Name 'Error' -Value $_.$global:errorCB
+                $item | Add-Member -type NoteProperty -Name 'Name' -Value $_.$global:nameCB
                 $item | Add-Member -type NoteProperty -Name 'Update' -Value ""
                 $item | Add-Member -type NoteProperty -Name 'Username' -Value $env:USERNAME
-                $item | Add-Member -type NoteProperty -Name 'Prio' -Value $_.Prioritet
+                $item | Add-Member -type NoteProperty -Name 'Prio' -Value $_.$global:prioCB
                 $item | Add-Member -type NoteProperty -Name 'Status' -Value ""      
                 $item | Add-Member -type NoteProperty -Name 'ID' -Value "$(New-Guid)" 
-                $item | Add-Member -type NoteProperty -Name 'deadLine' -Value $_.Stopp.ToString("dd-MMMM-yyyy", [System.Globalization.CultureInfo]::GetCultureInfo("en-US"))
-                $item | Add-Member -type NoteProperty -Name 'createDate' -Value $_.Start.ToString("dd-MMMM-yyyy", [System.Globalization.CultureInfo]::GetCultureInfo("en-US"))
+                $item | Add-Member -type NoteProperty -Name 'deadLine' -Value $_.$global:createDateCB.ToString("dd-MMMM-yyyy", [System.Globalization.CultureInfo]::GetCultureInfo("en-US"))
+                $item | Add-Member -type NoteProperty -Name 'createDate' -Value $_.$global:deadLineCB.ToString("dd-MMMM-yyyy", [System.Globalization.CultureInfo]::GetCultureInfo("en-US"))
                     
-                $item | ConvertTo-Json | Out-File -FilePath "$Global:autoTickets\$($filtertitle).json" -Force     
+                #$item | ConvertTo-Json | Out-File -FilePath "$Global:autoTickets\$($filtertitle).json" -Force     
+                
+                Write-Host $item
             }
         }
         updateAutoTicketList
