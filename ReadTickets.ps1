@@ -1839,7 +1839,7 @@ $inputXML = @"
         updateAutoTicketList
     })
     
-   function configureImport ($importFile) {
+   function configureImport ($importFile, $savedBinding) {
 
 $inputXML = @"
 <Window x:Class="WpfApp1.ConfigureImport"
@@ -1941,6 +1941,29 @@ $inputXML = @"
         $sheets = (Get-ExcelSheetInfo -Path $importFile).Name
 
         $sheets | ForEach-Object { $columnCB.Items.Add($_) }
+
+        if ( $savedBinding ) {
+            
+            $columns = (Import-Excel -Path $importFile -WorksheetName $savedBinding.sheet)[0]
+            $columns = $columns | get-member -MemberType NoteProperty | Select-Object -ExpandProperty Name
+
+            $columns | ForEach-Object {
+            
+                $titleCB.Items.Add($_)
+                $errorCB.Items.Add($_)
+                $nameCB.Items.Add($_)
+                $prioCB.Items.Add($_)
+                $createDateCB.Items.Add($_)
+                $deadLineCB.Items.Add($_)
+            }    
+
+            $titleCB.SelectedItem = $savedBinding.Title
+            $errorCB.SelectedItem = $savedBinding.Error
+            $nameCB.SelectedItem = $savedBinding.Name
+            $prioCB.SelectedItem = $savedBinding.prio
+            $createDateCB.SelectedItem = $savedBinding.deadLine
+            $deadLineCB.SelectedItem = $savedBinding.createDate
+        }
             
         $columnCB.Add_SelectionChanged({
             
@@ -1987,7 +2010,23 @@ $inputXML = @"
                 Install-Module -Name ImportExcel -Scope CurrentUser
             }
 
-            configureImport -importFile $importFile
+            if ( Test-Path -Path "$Global:Path\configureImport.json" ) {
+                $saveBindning = Get-Content -Path "$Global:Path\configureImport.json" | ConvertFrom-Json
+            }
+
+            configureImport -importFile $importFile.FileName -savedBinding $saveBindning
+
+            $item = New-Object PSObject
+            $item | Add-Member -type NoteProperty -Name 'Sheet' -Value $columnCB.SelectedItem
+            $item | Add-Member -type NoteProperty -Name 'Title' -Value $global:titleCB.SelectedItem
+            $item | Add-Member -type NoteProperty -Name 'Error' -Value $global:errorCB.SelectedItem
+            $item | Add-Member -type NoteProperty -Name 'Name' -Value $global:nameCB.SelectedItem
+            $item | Add-Member -type NoteProperty -Name 'Prio' -Value $global:prioCB.SelectedItem
+            $item | Add-Member -type NoteProperty -Name 'deadLine' -Value $global:createDateCB.SelectedItem
+            $item | Add-Member -type NoteProperty -Name 'createDate' -Value $global:deadLineCB.SelectedItem
+              
+            $item | ConvertTo-Json | Out-File -FilePath "$Global:Path\configureImport.json"    
+            
             Import-Excel -Path $importFile -WorksheetName $columnCB.SelectedItem
         }
 
