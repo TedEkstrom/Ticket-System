@@ -11,7 +11,7 @@ The ticket system consists of two different applications; ReadTickets and Maketi
 
 In settings you can set where it should retrieve its tickets (of course in the same place they are sent from MakeTicket) but you can also choose users. Of course you have to choose where to retrieve your tickets for it to work correctly. In some cases you need to restart it.
 
-Sheduale tickets is used to create recurring tickets. You set when they should be created and they will be created at that time.
+Schedule tickets is used to create recurring tickets. You set when they should be created and they will be created at that time.
 
 <img width="1106" height="733" alt="image" src="https://github.com/user-attachments/assets/e35567d8-ed44-4fcb-883e-7cade29aa719" />
 
