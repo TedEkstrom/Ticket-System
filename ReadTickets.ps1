@@ -690,7 +690,8 @@ function solvedTicket () {
     
     if ( $Tickets.SelectedItems.ticketName.Length -gt 0 ) { 
         
-        Move-Item -Path $loadedtickets[$global:LastSelectTicket.ticketName] -Destination "$Global:solvedTickets$($global:LastSelectTicket.ticketName.Replace(' ',''))_$(Get-Date -Format 'yyyyMMdd_ss').json"
+        #Move-Item -Path $loadedtickets[$global:LastSelectTicket.ticketName] -Destination "$Global:solvedTickets$($global:LastSelectTicket.ticketName.Replace(' ',''))_$(Get-Date -Format 'yyyyMMdd_ss').json"
+        Move-Item -Path $loadedtickets[$global:LastSelectTicket.ticketName] -Destination "$Global:solvedTickets$($global:LastSelectTicket.ticketName) (Solved-$(Get-Date -Format 'ddMMyy-hhmmss')).json"
         searchForTickets
     }
 }
@@ -700,7 +701,8 @@ function NotsolvedTicket () {
     if ( $Tickets.SelectedItems.ticketName.Length -gt 0 ) {  
     
         
-        Move-Item -Path $loadedtickets[$global:LastSelectTicket.ticketName] -Destination "$NotsolvedTickets$($global:LastSelectTicket.ticketName.Replace(' ',''))_$(Get-Date -Format 'yyyyMMdd_ss').json"
+        #Move-Item -Path $loadedtickets[$global:LastSelectTicket.ticketName] -Destination "$NotsolvedTickets$($global:LastSelectTicket.ticketName.Replace(' ',''))_$(Get-Date -Format 'yyyyMMdd_ss').json"
+        Move-Item -Path $loadedtickets[$global:LastSelectTicket.ticketName] -Destination "$NotsolvedTickets$($global:LastSelectTicket.ticketName) (Not-solved-$(Get-Date -Format 'ddMMyy-hhmmss')).json"
         searchForTickets
     }
 }
@@ -1655,15 +1657,21 @@ $inputXML = @"
             <!-- Knappar längst ner -->
             <StackPanel DockPanel.Dock="Bottom" Background="white" Margin="10">
                 <WrapPanel>
+
                     <Button Content="OK" Name="okB" Margin="10,0,0,0" Padding="0"
                             Background="#3498DB" Foreground="White"
                             FontWeight="Bold" BorderBrush="Transparent"
                             Width="100" Height="25" Cursor="Hand"/>
 
-                            <Button Content="New Schedule Ticket" Name="newAutoTicketB" Margin="10,0,0,0" Padding="0"
+                    <Button Content="New Schedule Ticket" Name="newAutoTicketB" Margin="10,0,0,0" Padding="0"
                             Background="#3498DB" Foreground="White"
                             FontWeight="Bold" BorderBrush="Transparent"
                             Width="140" Height="25" Cursor="Hand"/>
+
+                    <Button Content="Import tickets" Name="importB" Margin="10,0,0,0" Padding="0"
+                            Background="#3498DB" Foreground="White"
+                            FontWeight="Bold" BorderBrush="Transparent"
+                            Width="100" Height="25" Cursor="Hand"/>
 
                     <Button Content="Delete ticket" Name="deleteB" Margin="10,0,0,0" Padding="0"
                             Background="#FF975252" Foreground="White"
@@ -1739,6 +1747,7 @@ $inputXML = @"
         $okB = $Window.FindName("okB")
         $newAutoTicketB = $Window.FindName("newAutoTicketB")
         $deleteB = $Window.FindName("deleteB")
+        $importB = $Window.FindName("importB")
         $autoticketListViewT = $Window.FindName("autoticketListViewT")
     }
 
@@ -1773,7 +1782,8 @@ $inputXML = @"
                     createDate = $tempDate
                 }
 
-                if ( !([string]::IsNullOrEmpty($filterCB.SelectedItem)) ) {                    if ( !([string]::IsNullOrEmpty($json.CreateDate)) ) { 
+                if ( !([string]::IsNullOrEmpty($filterCB.SelectedItem)) ) {
+                    if ( !([string]::IsNullOrEmpty($json.CreateDate)) ) { 
 
                         $tempDate = $json.createDate.split(",").trim()
 
@@ -1831,12 +1841,252 @@ $inputXML = @"
         $filterCB.SelectedItem = $null 
         updateAutoTicketList
     })
+    
+   function configureImport ($importFile, $savedBinding) {
+
+$inputXML = @"
+<Window x:Class="WpfApp1.ConfigureImport"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:WpfApp1"
+        mc:Ignorable="d"
+        Title="ConfigureImport" Height="530" Width="600">
+    <Grid Margin="40,20,0,20">
+        <TextBlock Text="Configure the import" FontSize="20" FontWeight="Bold" Margin="0,0,0,0"/>
+        <Grid Margin="20,10,0,10">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+            <StackPanel Grid.Row="0" Orientation="Vertical" HorizontalAlignment="Left" Margin="0,30,0,0">
+                <TextBlock Text="Choose which sheet to use" FontSize="16" FontWeight="Bold" Margin="0,0,0,10"/>
+                <StackPanel Orientation="Horizontal">
+                    <ComboBox Name="columnCB" Width="100" Margin="5,5,0,0"/>
+                </StackPanel>
+            </StackPanel>
+            <StackPanel Grid.Row="1" Orientation="Vertical" HorizontalAlignment="Left" Margin="0,30,0,0">
+                <TextBlock Text="Choose which column to link to which label" FontSize="16" FontWeight="Bold" Margin="0,0,0,10"/>
+                <StackPanel Orientation="Horizontal">
+                    <Label Content="Title" Width="100" Margin="5,7,0,0"/>
+                    <ComboBox Name="titleCB" Width="100" Margin="30,7,0,0"/>
+                    <Label Content="Name of ticket" Margin="30,0,0,0"/>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal">
+                    <Label Content="Discription" Width="100" Margin="5,7,0,0"/>
+                    <ComboBox Name="errorCB" Width="100" Margin="30,7,0,0"/>
+                    <Label Content="Description of ticket." Margin="30,0,0,0"/>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal">
+                    <Label Content="Assigned" Width="100" Margin="5,7,0,0"/>
+                    <ComboBox Name="nameCB" Width="100" Margin="30,7,0,0"/>
+                    <Label Content="Person how is assigned to ticket." Margin="30,0,0,0"/>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal">
+                    <Label Content="Prio" Width="100" Margin="5,7,0,0"/>
+                    <ComboBox Name="prioCB" Width="100" Margin="30,7,0,0"/>
+                    <Label Content="Prio 1, Prio 2 or Prio 3" Margin="30,0,0,0"/>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal">
+                    <Label Content="CreateDate" Width="100" Margin="5,7,0,0"/>
+                    <ComboBox Name="createDateCB" Width="100" Margin="30,7,0,0"/>
+                    <Label Content="When it should show up in tickets system" Margin="30,0,0,0"/>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal">
+                    <Label Content="Deadline" Width="100" Margin="5,7,0,0"/>
+                    <ComboBox Name="deadLineCB" Width="100" Margin="30,7,0,0"/>
+                    <Label Content="DeadLine" Margin="30,0,0,0"/>
+                </StackPanel>
+            </StackPanel>
+
+            <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Left" Margin="0,20,0,0">
+                <Button Content="OK" Name="okB" Margin="10,0,0,0" Padding="0"
+                            Background="#3498DB" Foreground="White"
+                            FontWeight="Bold" BorderBrush="Transparent"
+                            Width="100" Height="25" Cursor="Hand"/>
+                <Button Content="Cancel" Name="cancelB" Margin="10,0,0,0" Padding="0"
+                            Background="#FF975252" Foreground="White"
+                            FontWeight="Bold" BorderBrush="Transparent"
+                            Width="100" Height="25" Cursor="Hand"/>
+            </StackPanel>
+        </Grid>
+    </Grid>
+</Window>
+"@
+
+        #create window
+        $inputXML = $inputXML -replace 'mc:Ignorable="d"', '' -replace "x:N", 'N' -replace '^<Win.*', '<Window'
+        [xml]$XAML = $inputXML
+
+        #Read XAML
+        $reader = (New-Object System.Xml.XmlNodeReader $xaml)
+        try {
+            $Window = [Windows.Markup.XamlReader]::Load( $reader )
+
+            $global:columnCB = $Window.FindName("columnCB")
+            $global:titleCB = $Window.FindName("titleCB")
+            $global:errorCB = $Window.FindName("errorCB")
+            $global:nameCB = $Window.FindName("nameCB")
+            $global:prioCB = $Window.FindName("prioCB")
+            $global:createDateCB = $Window.FindName("createDateCB")
+            $global:deadLineCB = $Window.FindName("deadLineCB")
+            $okB = $Window.FindName("okB")
+            $cancelB = $Window.FindName("cancelB")   
+        }
+
+        catch {
+            Write-Warning $_.Exception
+            throw
+        } 
+
+        $sheets = (Get-ExcelSheetInfo -Path $importFile).Name
+
+        $sheets | ForEach-Object { $columnCB.Items.Add($_) }
+
+        if ( $savedBinding ) {
+            
+            $columns = (Import-Excel -Path $importFile -WorksheetName $savedBinding.sheet)[0]
+            $columns = $columns | get-member -MemberType NoteProperty | Select-Object -ExpandProperty Name
+
+            $columns | ForEach-Object {
+            
+                $titleCB.Items.Add($_)
+                $errorCB.Items.Add($_)
+                $nameCB.Items.Add($_)
+                $prioCB.Items.Add($_)
+                $createDateCB.Items.Add($_)
+                $deadLineCB.Items.Add($_)
+            }    
+
+            $columnCB.SelectedItem = $savedBinding.Sheet
+            $titleCB.SelectedItem = $savedBinding.Title
+            $errorCB.SelectedItem = $savedBinding.Error
+            $nameCB.SelectedItem = $savedBinding.Name
+            $prioCB.SelectedItem = $savedBinding.prio
+            $createDateCB.SelectedItem = $savedBinding.deadLine
+            $deadLineCB.SelectedItem = $savedBinding.createDate
+        }
+            
+        $columnCB.Add_SelectionChanged({
+            
+            $columns = (Import-Excel -Path $importFile -WorksheetName $columnCB.SelectedItem)[0]
+            $columns = $columns | get-member -MemberType NoteProperty | Select-Object -ExpandProperty Name
+
+
+            $columns | ForEach-Object {
+            
+                $titleCB.Items.Add($_)
+                $errorCB.Items.Add($_)
+                $nameCB.Items.Add($_)
+                $prioCB.Items.Add($_)
+                $createDateCB.Items.Add($_)
+                $deadLineCB.Items.Add($_)
+            }            
+        })
+
+        $okB.Add_Click({
+        
+            $Window.Close()
+        })
+
+        $cancelB.Add_Click({
+            
+            ## Sätt ett värde som falskt som används för att avsluta importeringen!
+        })
+        
+        [Void]$Window.ShowDialog()
+   }
+
+   $importB.Add_Click({ 
+        
+        $importFile = New-Object windows.forms.openfiledialog   
+        $importFile.initialDirectory = "";   
+        $importFile.title = "Import tickets from schedual"   
+        $importFile.filter = "Schedual|*.xlsx"  #"Schedual|*.xlsx;.csv" 
+        [Void]$importFile.ShowDialog()
+
+        $data = @()
+
+        if ( $importFile.FileName -like "*xlsx" ) {
+            
+            # Imports files with Xlsx-format
+            if ( !(Get-module -Name ImportExcel) ) {
+                Install-Module -Name ImportExcel -Scope CurrentUser
+            }
+
+            $ProgressBar = showProgressBar -show $show
+
+            if ( Test-Path -Path "$Global:Path\configureImport.json" ) {
+               $saveBindning = Get-Content -Path "$Global:Path\configureImport.json" | ConvertFrom-Json
+            }
+
+            if ( $saveBindning.Sheet -or $saveBindning.Title -or $saveBindning.Error -or $saveBindning.Name -or $saveBindning.Prio -or $saveBindning.deadLine -or $saveBindning.createDate ) {
+                configureImport -importFile $importFile.FileName -savedBinding $saveBindning
+            } else {
+                configureImport -importFile $importFile.FileName
+            }
+
+            $item = New-Object PSObject
+            $item | Add-Member -type NoteProperty -Name 'Sheet' -Value $columnCB.SelectedItem
+            $item | Add-Member -type NoteProperty -Name 'Title' -Value $global:titleCB.SelectedItem
+            $item | Add-Member -type NoteProperty -Name 'Error' -Value $global:errorCB.SelectedItem
+            $item | Add-Member -type NoteProperty -Name 'Name' -Value $global:nameCB.SelectedItem
+            $item | Add-Member -type NoteProperty -Name 'Prio' -Value $global:prioCB.SelectedItem
+            $item | Add-Member -type NoteProperty -Name 'deadLine' -Value $global:createDateCB.SelectedItem
+            $item | Add-Member -type NoteProperty -Name 'createDate' -Value $global:deadLineCB.SelectedItem
+              
+            $item | ConvertTo-Json | Out-File -FilePath "$Global:Path\configureImport.json"    
+            
+            $data = Import-Excel -Path $importFile.FileName -WorksheetName $columnCB.SelectedItem
+
+            closeProgressBar -ProgressBar $ProgressBar -Show $show 
+        }
+
+        elseif ( $importFile.FileName -like "*csv" ) {
+            
+            # Imports files with CSV-format
+        }
+
+        $data | ForEach-Object {
+            
+            if ( ![string]::IsNullOrEmpty($_.Moment) ) {
+               
+                $filtertitle = $_.Moment.Replace(":", "-")
+
+                $json = Get-Content -Path "$Global:Path\configureImport.json" | ConvertFrom-Json
+                
+                $item = New-Object PSObject
+                $item | Add-Member -type NoteProperty -Name 'Title' -Value $_.($json.title)
+                $item | Add-Member -type NoteProperty -Name 'Computer' -Value ""
+                $item | Add-Member -type NoteProperty -Name 'Tag' -Value $env:COMPUTERNAME 
+                $item | Add-Member -type NoteProperty -Name 'Date' -Value (Get-Date -Format "yymmdd")
+                $item | Add-Member -type NoteProperty -Name 'Error' -Value $_.($json.error)
+                $item | Add-Member -type NoteProperty -Name 'Name' -Value $_.($json.name)
+                $item | Add-Member -type NoteProperty -Name 'Update' -Value ""
+                $item | Add-Member -type NoteProperty -Name 'Username' -Value $env:USERNAME
+                $item | Add-Member -type NoteProperty -Name 'Prio' -Value $_.($json.prio)
+                $item | Add-Member -type NoteProperty -Name 'Status' -Value ""      
+                $item | Add-Member -type NoteProperty -Name 'ID' -Value "$(New-Guid)" 
+                if ( $_.($json.deadline) -is [datetime] ) {
+                    $item | Add-Member -type NoteProperty -Name 'deadLine' -Value $_.($json.deadline).ToString("dd-MMMM-yyyy", [System.Globalization.CultureInfo]::GetCultureInfo("en-US"))
+                }
+                if ( $_.($json.createDate) -is [datetime] ) {
+                    $item | Add-Member -type NoteProperty -Name 'createDate' -Value $_.($json.createDate).ToString("dd-MMMM-yyyy", [System.Globalization.CultureInfo]::GetCultureInfo("en-US"))
+                }
+                
+                $item | ConvertTo-Json | Out-File -FilePath "$Global:autoTickets\$($filtertitle).json" -Force      
+            }
+        }
+        updateAutoTicketList
+    })
 
     $filterB.Add_Click({updateAutoTicketList})
 
     $okB.Add_Click({$Window.hide()})
 
-    [Void]$Window.ShowDialog();
+    [Void]$Window.ShowDialog()
 }
 
 function createAndUpdateAutoTicket ($switch) {
@@ -2023,7 +2273,7 @@ $inputXML = @"
         $filtertitle = $issueT.Text.Replace(":", "-")
 
         if ( !$switch -eq "update" ) {
-            ## New auto ticket
+            ## New schedual ticket
             $item = New-Object PSObject
             $item | Add-Member -type NoteProperty -Name 'Title' -Value $issueT.Text
             $item | Add-Member -type NoteProperty -Name 'Computer' -Value ""
