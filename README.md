@@ -5,7 +5,8 @@ This is a simple ticket system where you can submit and read submitted tickets. 
 The ticket system consists of two different applications; ReadTickets and Maketicket. Just as the names suggest, MakeTicket is used to submit tickets and ReadTickets is used to read and manage them.
 
 
-![image](https://github.com/user-attachments/assets/8a78f5e1-93a4-41d1-b3fd-c81a52c9f902)
+<img width="1571" height="722" alt="image" src="https://github.com/user-attachments/assets/ec7b9301-edb3-46b2-8032-114daef3f3cb" />
+
 
 
 In settings you can set where it should retrieve its tickets (of course in the same place they are sent from MakeTicket) but you can also choose users. Of course you have to choose where to retrieve your tickets for it to work correctly. In some cases you need to restart it.

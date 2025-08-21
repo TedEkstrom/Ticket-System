@@ -1782,7 +1782,8 @@ $inputXML = @"
                     createDate = $tempDate
                 }
 
-                if ( !([string]::IsNullOrEmpty($filterCB.SelectedItem)) ) {                    if ( !([string]::IsNullOrEmpty($json.CreateDate)) ) { 
+                if ( !([string]::IsNullOrEmpty($filterCB.SelectedItem)) ) {
+                    if ( !([string]::IsNullOrEmpty($json.CreateDate)) ) { 
 
                         $tempDate = $json.createDate.split(",").trim()
 
