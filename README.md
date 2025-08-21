@@ -11,9 +11,10 @@ The ticket system consists of two different applications; ReadTickets and Maketi
 
 In settings you can set where it should retrieve its tickets (of course in the same place they are sent from MakeTicket) but you can also choose users. Of course you have to choose where to retrieve your tickets for it to work correctly. In some cases you need to restart it.
 
-Automatic tickets is used to create recurring tickets. You set when they should be created and they will be created at that time.
+Sheduale tickets is used to create recurring tickets. You set when they should be created and they will be created at that time.
 
-![image](https://github.com/user-attachments/assets/ccc0f3fb-1a03-4998-96eb-01c576d7e940)
+<img width="1106" height="733" alt="image" src="https://github.com/user-attachments/assets/e35567d8-ed44-4fcb-883e-7cade29aa719" />
+
 
 
 The MakeTicket.dat file is for MakeTicket and must be placed in the same folder. This is how you tell the application where to place the new tickets, for example \\\192.168.1.19\tickets.
