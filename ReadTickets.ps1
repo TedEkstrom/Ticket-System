@@ -690,7 +690,8 @@ function solvedTicket () {
     
     if ( $Tickets.SelectedItems.ticketName.Length -gt 0 ) { 
         
-        Move-Item -Path $loadedtickets[$global:LastSelectTicket.ticketName] -Destination "$Global:solvedTickets$($global:LastSelectTicket.ticketName.Replace(' ',''))_$(Get-Date -Format 'yyyyMMdd_ss').json"
+        #Move-Item -Path $loadedtickets[$global:LastSelectTicket.ticketName] -Destination "$Global:solvedTickets$($global:LastSelectTicket.ticketName.Replace(' ',''))_$(Get-Date -Format 'yyyyMMdd_ss').json"
+        Move-Item -Path $loadedtickets[$global:LastSelectTicket.ticketName] -Destination "$Global:solvedTickets$($global:LastSelectTicket.ticketName) (Solved-$(Get-Date -Format 'ddMMyy-hhmmss')).json"
         searchForTickets
     }
 }
@@ -700,7 +701,8 @@ function NotsolvedTicket () {
     if ( $Tickets.SelectedItems.ticketName.Length -gt 0 ) {  
     
         
-        Move-Item -Path $loadedtickets[$global:LastSelectTicket.ticketName] -Destination "$NotsolvedTickets$($global:LastSelectTicket.ticketName.Replace(' ',''))_$(Get-Date -Format 'yyyyMMdd_ss').json"
+        #Move-Item -Path $loadedtickets[$global:LastSelectTicket.ticketName] -Destination "$NotsolvedTickets$($global:LastSelectTicket.ticketName.Replace(' ',''))_$(Get-Date -Format 'yyyyMMdd_ss').json"
+        Move-Item -Path $loadedtickets[$global:LastSelectTicket.ticketName] -Destination "$NotsolvedTickets$($global:LastSelectTicket.ticketName) (Not-solved-$(Get-Date -Format 'ddMMyy-hhmmss')).json"
         searchForTickets
     }
 }
@@ -1957,6 +1959,7 @@ $inputXML = @"
                 $deadLineCB.Items.Add($_)
             }    
 
+            $columnCB.SelectedItem = $savedBinding.Sheet
             $titleCB.SelectedItem = $savedBinding.Title
             $errorCB.SelectedItem = $savedBinding.Error
             $nameCB.SelectedItem = $savedBinding.Name
@@ -2000,8 +2003,10 @@ $inputXML = @"
         $importFile = New-Object windows.forms.openfiledialog   
         $importFile.initialDirectory = "";   
         $importFile.title = "Import tickets from schedual"   
-        $importFile.filter = "Schedual|*.xlsx;.csv" 
-        $importFile.ShowDialog() | Out-Null;
+        $importFile.filter = "Schedual|*.xlsx"  #"Schedual|*.xlsx;.csv" 
+        [Void]$importFile.ShowDialog()
+
+        $data = @()
 
         if ( $importFile.FileName -like "*xlsx" ) {
             
@@ -2010,11 +2015,17 @@ $inputXML = @"
                 Install-Module -Name ImportExcel -Scope CurrentUser
             }
 
+            $ProgressBar = showProgressBar -show $show
+
             if ( Test-Path -Path "$Global:Path\configureImport.json" ) {
-                $saveBindning = Get-Content -Path "$Global:Path\configureImport.json" | ConvertFrom-Json
+               $saveBindning = Get-Content -Path "$Global:Path\configureImport.json" | ConvertFrom-Json
             }
 
-            configureImport -importFile $importFile.FileName -savedBinding $saveBindning
+            if ( $saveBindning.Sheet -or $saveBindning.Title -or $saveBindning.Error -or $saveBindning.Name -or $saveBindning.Prio -or $saveBindning.deadLine -or $saveBindning.createDate ) {
+                configureImport -importFile $importFile.FileName -savedBinding $saveBindning
+            } else {
+                configureImport -importFile $importFile.FileName
+            }
 
             $item = New-Object PSObject
             $item | Add-Member -type NoteProperty -Name 'Sheet' -Value $columnCB.SelectedItem
@@ -2027,7 +2038,9 @@ $inputXML = @"
               
             $item | ConvertTo-Json | Out-File -FilePath "$Global:Path\configureImport.json"    
             
-            Import-Excel -Path $importFile -WorksheetName $columnCB.SelectedItem
+            $data = Import-Excel -Path $importFile.FileName -WorksheetName $columnCB.SelectedItem
+
+            closeProgressBar -ProgressBar $ProgressBar -Show $show 
         }
 
         elseif ( $importFile.FileName -like "*csv" ) {
@@ -2038,37 +2051,31 @@ $inputXML = @"
         $data | ForEach-Object {
             
             if ( ![string]::IsNullOrEmpty($_.Moment) ) {
-                
-                ## Använd detta värde för att sätt på vilka kolumner den väljer.
-                <#    
-                    $global:titleCB
-                    $global:errorCB
-                    $global:nameCB
-                    $global:prioCB
-                    $global:createDateCB
-                    $global:deadLineCB
-                #>
-
+               
                 $filtertitle = $_.Moment.Replace(":", "-")
+
+                $json = Get-Content -Path "$Global:Path\configureImport.json" | ConvertFrom-Json
                 
                 $item = New-Object PSObject
-                $item | Add-Member -type NoteProperty -Name 'Title' -Value $_.$global:titleCB.SelectedItem
+                $item | Add-Member -type NoteProperty -Name 'Title' -Value $_.($json.title)
                 $item | Add-Member -type NoteProperty -Name 'Computer' -Value ""
                 $item | Add-Member -type NoteProperty -Name 'Tag' -Value $env:COMPUTERNAME 
                 $item | Add-Member -type NoteProperty -Name 'Date' -Value (Get-Date -Format "yymmdd")
-                $item | Add-Member -type NoteProperty -Name 'Error' -Value $_.$global:errorCB
-                $item | Add-Member -type NoteProperty -Name 'Name' -Value $_.$global:nameCB
+                $item | Add-Member -type NoteProperty -Name 'Error' -Value $_.($json.error)
+                $item | Add-Member -type NoteProperty -Name 'Name' -Value $_.($json.name)
                 $item | Add-Member -type NoteProperty -Name 'Update' -Value ""
                 $item | Add-Member -type NoteProperty -Name 'Username' -Value $env:USERNAME
-                $item | Add-Member -type NoteProperty -Name 'Prio' -Value $_.$global:prioCB
+                $item | Add-Member -type NoteProperty -Name 'Prio' -Value $_.($json.prio)
                 $item | Add-Member -type NoteProperty -Name 'Status' -Value ""      
                 $item | Add-Member -type NoteProperty -Name 'ID' -Value "$(New-Guid)" 
-                $item | Add-Member -type NoteProperty -Name 'deadLine' -Value $_.$global:createDateCB.ToString("dd-MMMM-yyyy", [System.Globalization.CultureInfo]::GetCultureInfo("en-US"))
-                $item | Add-Member -type NoteProperty -Name 'createDate' -Value $_.$global:deadLineCB.ToString("dd-MMMM-yyyy", [System.Globalization.CultureInfo]::GetCultureInfo("en-US"))
-                    
-                #$item | ConvertTo-Json | Out-File -FilePath "$Global:autoTickets\$($filtertitle).json" -Force     
+                if ( $_.($json.deadline) -is [datetime] ) {
+                    $item | Add-Member -type NoteProperty -Name 'deadLine' -Value $_.($json.deadline).ToString("dd-MMMM-yyyy", [System.Globalization.CultureInfo]::GetCultureInfo("en-US"))
+                }
+                if ( $_.($json.createDate) -is [datetime] ) {
+                    $item | Add-Member -type NoteProperty -Name 'createDate' -Value $_.($json.createDate).ToString("dd-MMMM-yyyy", [System.Globalization.CultureInfo]::GetCultureInfo("en-US"))
+                }
                 
-                Write-Host $item
+                $item | ConvertTo-Json | Out-File -FilePath "$Global:autoTickets\$($filtertitle).json" -Force      
             }
         }
         updateAutoTicketList
