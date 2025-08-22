@@ -839,9 +839,8 @@ $inputXML = @"
                 $item | Add-Member -type NoteProperty -Name 'ticketOwner' -Value $Global:ticketOwner
             }
             $item | Add-Member -type NoteProperty -Name 'Status' -Value $global:LoadedTicket.SelectedItem
-
             $item | Add-Member -type NoteProperty -Name 'id' -Value $global:LoadedTicket.id
-
+            $item | Add-Member -type NoteProperty -Name 'deadLine' -Value $global:LoadedTicket.deadLine
             $item | Add-Member -type NoteProperty -Name 'visible' -Value $global:LoadedTicket.visible
 
             $global:loadedticket =  $item
