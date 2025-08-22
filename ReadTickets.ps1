@@ -1558,7 +1558,7 @@ $inputXML = @"
             } elseif ( $prioCB.SelectionBoxItem -eq "Prio 1" ) {
                 $item | ConvertTo-Json | Out-File -FilePath "$Global:prio1\$($filtertitle).json"
             } elseif ( $prioCB.SelectionBoxItem -eq "Prio 2" ) {
-                $item | ConvertTo-Json | Out-File -FilePath "$Global:prio1\$($filtertitle).json"
+                $item | ConvertTo-Json | Out-File -FilePath "$Global:prio2\$($filtertitle).json"
             } elseif ( $prioCB.SelectionBoxItem -eq "Prio 3" ) {
                 $item | ConvertTo-Json | Out-File -FilePath "$Global:prio3\$($filtertitle).json"
             } 
