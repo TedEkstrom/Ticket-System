@@ -28,6 +28,8 @@ $Global:third = 0
 
 $chooseTicketOwner = $false
 
+$Global:cancelImport = $false
+
 ####################################################
 
 ## Create profile
@@ -1985,13 +1987,13 @@ $inputXML = @"
         })
 
         $okB.Add_Click({
-            $Window.Close()
-            return $true
+            $Global:cancelImport = $false
+            $Window.Close()   
         })
 
         $cancelB.Add_Click({
+            $Global:cancelImport = $true
             $Window.Close()
-            return $false
         })
         
         [Void]$Window.ShowDialog()
@@ -2005,9 +2007,9 @@ $inputXML = @"
         $importFile.filter = "Schedual|*.xlsx"  #"Schedual|*.xlsx;.csv" 
         [Void]$importFile.ShowDialog()
 
-        $data = @()
+        $Global:cancelImport = $false
 
-        $cansel = $false
+        $data = @()
 
         if ( $importFile.FileName -like "*xlsx" ) {
             
@@ -2023,9 +2025,9 @@ $inputXML = @"
             }
 
             if ( $saveBindning.Sheet -or $saveBindning.Title -or $saveBindning.Error -or $saveBindning.Name -or $saveBindning.Prio -or $saveBindning.deadLine -or $saveBindning.createDate ) {
-                $cansel = configureImport -importFile $importFile.FileName -savedBinding $saveBindning
+                configureImport -importFile $importFile.FileName -savedBinding $saveBindning
             } else {
-                $cansel = configureImport -importFile $importFile.FileName
+                configureImport -importFile $importFile.FileName
             }
 
             if ( !$cansel ) {
@@ -2050,7 +2052,7 @@ $inputXML = @"
             # Imports files with CSV-format
         }
 
-        if ( !$cansel ) {
+        if ( !$Global:cancelImport ) {
             $data | ForEach-Object {
             
                 if ( ![string]::IsNullOrEmpty($_.Moment) ) {
