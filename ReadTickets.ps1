@@ -1179,10 +1179,11 @@ $inputXML = @"
         } else {
             $item | Add-Member -type NoteProperty -Name 'Status' -Value $statusT.Text
         }
-        if ( ![string]::IsNullOrEmpty($Global:dateTime) ) {
-            $item | Add-Member -type NoteProperty -Name 'deadLine' -Value $Global:dateTime
+
+        if ( $DeadlineT.Text -like "*Not set" ) {
+            $item | Add-Member -type NoteProperty -Name 'deadLine' -Value ""
         } else {
-            $item | Add-Member -type NoteProperty -Name 'deadLine' -Value $global:LoadedTicket.deadLine
+            $item | Add-Member -type NoteProperty -Name 'deadLine' -Value $DeadlineT.Text.replace("Deadline: ", "")
         }
 
         $item | Add-Member -type NoteProperty -Name 'id' -Value $global:LoadedTicket.id
