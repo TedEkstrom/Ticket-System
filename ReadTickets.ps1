@@ -347,7 +347,7 @@ function loadAutosaveSettings () {
 
     $Global:newTickets = "$Global:Path\new\"
     $Global:solvedTickets = "$Global:Path\solved\"
-    $NotsolvedTickets = "$Global:Path\notsolved\"
+    $Global:NotsolvedTickets = "$Global:Path\notsolved\"
     $Global:deletedTickets = "$Global:Path\Deleted\"
     $Global:prio1 = "$Global:Path\prio1\"
     $Global:prio2 = "$Global:Path\prio2\"
@@ -360,7 +360,7 @@ function loadAutosaveSettings () {
     
         [void](New-Item -Path $Global:newTickets -ItemType Directory -ErrorAction SilentlyContinue)
         [void](New-Item -Path $Global:solvedTickets -ItemType Directory -ErrorAction SilentlyContinue)
-        [void](New-Item -Path $NotsolvedTickets -ItemType Directory -ErrorAction SilentlyContinue)
+        [void](New-Item -Path $Global:NotsolvedTickets -ItemType Directory -ErrorAction SilentlyContinue)
         [void](New-Item -Path $Global:deletedTickets -ItemType Directory -ErrorAction SilentlyContinue)
         [void](New-Item -Path $Global:prio1 -ItemType Directory -ErrorAction SilentlyContinue)
         [void](New-Item -Path $Global:prio2 -ItemType Directory -ErrorAction SilentlyContinue)
@@ -644,7 +644,7 @@ function searchForTickets ($show) {
             }
 
             if ( $notSolvedR.IsChecked  ) {
-               $NotSolvedT = (Get-ChildItem -Path $NotSolvedTickets -File).FullName
+               $NotSolvedT = (Get-ChildItem -Path $Global:NotsolvedTickets -File).FullName
                if ( $NotSolvedT ) {  
                   $NotSolvedT | ForEach-Object {
                      $temp = ($_.Split("\") | Select-Object -Last 1).ToString().Replace(".json", "")
@@ -703,8 +703,8 @@ function NotsolvedTicket () {
     if ( $Tickets.SelectedItems.ticketName.Length -gt 0 ) {  
     
         
-        #Move-Item -Path $loadedtickets[$global:LastSelectTicket.ticketName] -Destination "$NotsolvedTickets$($global:LastSelectTicket.ticketName.Replace(' ',''))_$(Get-Date -Format 'yyyyMMdd_ss').json"
-        Move-Item -Path $loadedtickets[$global:LastSelectTicket.ticketName] -Destination "$NotsolvedTickets$($global:LastSelectTicket.ticketName) (Not-solved-$(Get-Date -Format 'ddMMyy-hhmmss')).json"
+        #Move-Item -Path $loadedtickets[$global:LastSelectTicket.ticketName] -Destination "$Global:NotsolvedTickets$($global:LastSelectTicket.ticketName.Replace(' ',''))_$(Get-Date -Format 'yyyyMMdd_ss').json"
+        Move-Item -Path $loadedtickets[$global:LastSelectTicket.ticketName] -Destination "$Global:NotsolvedTickets$($global:LastSelectTicket.ticketName) (Not-solved-$(Get-Date -Format 'ddMMyy-hhmmss')).json"
         searchForTickets
     }
 }
@@ -2474,7 +2474,7 @@ $inputXML = @"
             $Global:prio1T = (Get-ChildItem -Path $Global:prio1 -File).FullName
             $Global:prio2T = (Get-ChildItem -Path $Global:prio2 -File).FullName
             $Global:prio3T = (Get-ChildItem -Path $Global:prio3 -File).FullName
-            $NotSolvdT = (Get-ChildItem -Path $NotsolvedTickets -File).FullName
+            $NotSolvdT = (Get-ChildItem -Path $Global:NotsolvedTickets -File).FullName
             $DeletedT = (Get-ChildItem -Path $Global:deletedTickets -File).FullName
 
             $temp = $loadedtickets[$global:LastSelectTicket.ticketName].Split("\") | Select-Object -Last 1
