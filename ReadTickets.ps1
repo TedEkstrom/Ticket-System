@@ -2908,6 +2908,7 @@ $showWithNoOwners.Add_Click({ searchForTickets })
 $Global:noOwnersWasChecked = $false  
 $showAllTicketsR.Add_Click({ 
     searchForTickets 
+    <#
     if ( $Global:noOwnersWasChecked -and !$showWithNoOwners.IsChecked ) {
         $Global:noOwnersWasChecked = $false
         $showWithNoOwners.IsChecked = $true
@@ -2915,6 +2916,7 @@ $showAllTicketsR.Add_Click({
         $Global:noOwnersWasChecked = $showWithNoOwners.IsChecked
         $showWithNoOwners.IsChecked = $false
     }
+    #>
 })  
 
 $newTicketB.Add_Click({ newTicket })
