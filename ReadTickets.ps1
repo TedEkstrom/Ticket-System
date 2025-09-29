@@ -184,7 +184,8 @@ $inputXML = @"
                     <CheckBox Name="solvedR" Content="Solved" Margin="5"/>
                     <CheckBox Name="notSolvedR" Content="Not solved" Margin="5"/>
                     <CheckBox Name="pausedR" Content="Paused" Margin="5"/> 
-                    <CheckBox Name="showWithNoOwners" Content="Show no assigned" Margin="5"/>
+                    <CheckBox Name="showWithNoOwnersR" Content="Show not assigned" Margin="5"/>
+                    <CheckBox Name="showWithAndWithNoOwnersR" Content="Show your tickets and not assigned tickets" Margin="5"/>
                     <CheckBox Name="showAllTicketsR" Content="Show all tickets" Margin="5"/>
                 </WrapPanel>
             </StackPanel>
@@ -293,7 +294,9 @@ try {
     $solvedR = $MainWindow.FindName("solvedR") #< ändra till $solvedR
     $Global:pauseR = $MainWindow.FindName("pausedR")
     $showAllTicketsR = $MainWindow.FindName("showAllTicketsR")
-    $showWithNoOwners = $MainWindow.FindName("showWithNoOwners")
+    $showWithNoOwnersR = $MainWindow.FindName("showWithNoOwnersR")
+
+    $showWithAndWithNoOwnersR = $MainWindow.FindName("showWithAndWithNoOwnersR")
 
     $newTicketB = $MainWindow.FindName("newTicketB")
     $renameTicketB = $MainWindow.FindName("renameTicketB")
@@ -327,7 +330,7 @@ function loadAutosaveSettings () {
     $showAllTicketsR.IsChecked = $AutoSave.WithOutOwner
     $Global:autoMove = $AutoSave.automove
     $Global:ticketOwner = $AutoSave.user
-    $showWithNoOwners.IsChecked = $AutoSave.showWithNoOwners
+    $showWithNoOwnersR.IsChecked = $AutoSave.showWithNoOwners
     $Global:first = $AutoSave.first
     $Global:second = $AutoSave.second
     $Global:third = $AutoSave.third
@@ -553,9 +556,15 @@ function searchForTickets ($show) {
 
                             scanJsonFiles -switch 1 -temp $temp -json $json
 
-                        } elseif ( $showWithNoOwners.IsChecked ) {
+                        } elseif ( $showWithNoOwnersR.IsChecked ) { 
                     
-                            if ( [string]::IsNullOrEmpty($containsTicketOwner) ) { 
+                            if ( [string]::IsNullOrEmpty($containsTicketOwner) ) {  
+                        
+                                scanJsonFiles -switch 1 -temp $temp -json $json
+                            }
+                        } elseif ( $showWithAndWithNoOwnersR.IsChecked ) {
+                    
+                            if ( [string]::IsNullOrEmpty($containsTicketOwner) -or ($containsTicketOwner -eq $Global:ticketOwner) ) { 
                         
                                 scanJsonFiles -switch 1 -temp $temp -json $json
                             }
@@ -584,15 +593,22 @@ function searchForTickets ($show) {
 
                             scanJsonFiles -switch 1 -temp $temp -json $json
 
-                        } elseif ( $showWithNoOwners.IsChecked ) {
+                        } elseif ( $showWithNoOwnersR.IsChecked ) { 
                     
-                            if ( [string]::IsNullOrEmpty($containsTicketOwner) ) { 
+                            if ( [string]::IsNullOrEmpty($containsTicketOwner) ) {  
                         
                                 scanJsonFiles -switch 1 -temp $temp -json $json
                             }
-                        } elseif ( !$showAllTicketsR.IsChecked ) {  
+                        } elseif ( $showWithAndWithNoOwnersR.IsChecked ) { 
+                    
+                            if ( [string]::IsNullOrEmpty($containsTicketOwner) -or ($containsTicketOwner -eq $Global:ticketOwner) ) { 
+                        
+                                scanJsonFiles -switch 1 -temp $temp -json $json
+                            }
+                        } elseif ( !$showAllTicketsR.IsChecked ) {
                     
                             if ( ![string]::IsNullOrEmpty($containsTicketOwner) ) { 
+                        
                                 if ( $containsTicketOwner -eq $Global:ticketOwner ) {
                                     scanJsonFiles -switch 1 -temp $temp -json $json
                                 }
@@ -614,15 +630,22 @@ function searchForTickets ($show) {
 
                             scanJsonFiles -switch 1 -temp $temp -json $json
 
-                        } elseif ( $showWithNoOwners.IsChecked ) {
+                        } elseif ( $showWithNoOwnersR.IsChecked ) { 
                     
-                            if ( [string]::IsNullOrEmpty($containsTicketOwner) ) { 
+                            if ( [string]::IsNullOrEmpty($containsTicketOwner) ) {  
                         
                                 scanJsonFiles -switch 1 -temp $temp -json $json
                             }
-                        } elseif ( !$showAllTicketsR.IsChecked ) {  
+                        } elseif ( $showWithAndWithNoOwnersR.IsChecked ) {
+                    
+                            if ( [string]::IsNullOrEmpty($containsTicketOwner) -or ($containsTicketOwner -eq $Global:ticketOwner) ) { 
+                        
+                                scanJsonFiles -switch 1 -temp $temp -json $json
+                            }
+                        } elseif ( !$showAllTicketsR.IsChecked ) {
                     
                             if ( ![string]::IsNullOrEmpty($containsTicketOwner) ) { 
+                        
                                 if ( $containsTicketOwner -eq $Global:ticketOwner ) {
                                     scanJsonFiles -switch 1 -temp $temp -json $json
                                 }
@@ -1770,7 +1793,7 @@ $inputXML = @"
                 $temp = ($_.Split("\") | Select-Object -Last 1).ToString().Replace(".json", "")
                 $json = Get-Content -Path $_ | ConvertFrom-Json
 
-                $tempDate = $json.CreateDate.toString().Substring(0, $json.CreateDate.Length-1)
+                $tempDate = $json.CreateDate.toString().Substring(0, $json.CreateDate.Length)
 
                 $ticket = New-Object PSObject -Property @{
                     ticketName = $temp
@@ -2041,7 +2064,7 @@ $inputXML = @"
                 $item | Add-Member -type NoteProperty -Name 'deadLine' -Value $global:createDateCB.SelectedItem
                 $item | Add-Member -type NoteProperty -Name 'createDate' -Value $global:deadLineCB.SelectedItem
               
-                $item | ConvertTo-Json | Out-File -FilePath "$Global:Path\configureImport.json"    
+                $item | ConvertTo-Json | Out-File -FilePath "$Global:Path\configureImport.json"
             
                 $data = Import-Excel -Path $importFile.FileName -WorksheetName $columnCB.SelectedItem
             }
@@ -2068,7 +2091,7 @@ $inputXML = @"
                     $item | Add-Member -type NoteProperty -Name 'Tag' -Value $env:COMPUTERNAME 
                     $item | Add-Member -type NoteProperty -Name 'Date' -Value (Get-Date -Format "yymmdd")
                     $item | Add-Member -type NoteProperty -Name 'Error' -Value $_.($json.error)
-                    $item | Add-Member -type NoteProperty -Name 'Name' -Value $_.($json.name)
+                    $item | Add-Member -type NoteProperty -Name 'ticketOwner' -Value $_.($json.name)
                     $item | Add-Member -type NoteProperty -Name 'Update' -Value ""
                     $item | Add-Member -type NoteProperty -Name 'Username' -Value $env:USERNAME
                     $item | Add-Member -type NoteProperty -Name 'Prio' -Value $_.($json.prio)
@@ -2081,7 +2104,8 @@ $inputXML = @"
                         $item | Add-Member -type NoteProperty -Name 'createDate' -Value $_.($json.createDate).ToString("dd-MMMM-yyyy", [System.Globalization.CultureInfo]::GetCultureInfo("en-US"))
                     }
                 
-                    $item | ConvertTo-Json | Out-File -FilePath "$Global:autoTickets\$($filtertitle).json" -Force      
+                    $item | ConvertTo-Json | Out-File -FilePath "$Global:autoTickets\$($filtertitle).json" -Force 
+                        
                 }
             }
         }
@@ -2259,12 +2283,6 @@ $inputXML = @"
             $statusT.Text = $desiredStatus
         }
         
-        #if ( !($Global:loadedAutoticket.createDate -eq $null -or $Global:loadedAutoticket.createDate -eq "") ) {
-        #    $createDateT.Text = "Create Date: $($Global:loadedAutoticket.createDate)"
-        #} else {
-        #    $createDateT.Text = "Create Date: Not set"
-        #}
-
         $createDates = $Global:loadedAutoticket.createDate.split(",").trim()
         $createDates | ForEach-Object { $temp = $_.replace("-", " "); $createDateCB.Items.add($_) }
  
@@ -2290,6 +2308,7 @@ $inputXML = @"
             $item | Add-Member -type NoteProperty -Name 'Update' -Value ""
             $item | Add-Member -type NoteProperty -Name 'Username' -Value $env:USERNAME
             $item | Add-Member -type NoteProperty -Name 'Prio' -Value $prioCB.SelectionBoxItem
+            $item | Add-Member -type NoteProperty -Name 'ticketOwner' -Value $selectUserCB.SelectionBoxItem 
             if ( !($statusCB.SelectionBoxItem -eq "Not set") ) {
                 $item | Add-Member -type NoteProperty -Name 'Status' -Value $statusCB.SelectionBoxItem     
             } else {
@@ -2377,7 +2396,6 @@ $inputXML = @"
 
     $createDateB.Add_Click({
         calender
-        #$createDateT.Text = "Create Date: $($Global:dateTime)"
         $createDateCB.Items.add($Global:dateTime)
         $createDateCB.SelectedIndex = $createDateCB.Items.Count - 1
         
@@ -2402,7 +2420,6 @@ $inputXML = @"
     })
 
     $resetCreateDateB.Add_Click({
-        #$createDateT.Text = "Create Date: Not set"
         $createDateCB.items.Clear()
         $Global:dateTime = ""
     })
@@ -2531,7 +2548,7 @@ function autosaveSettings () {
     $item | Add-Member -type NoteProperty -Name 'WithOutOwner' -Value $showAllTicketsR.IsChecked
     $item | Add-Member -type NoteProperty -Name 'automove' -Value $Global:autoMove
     $item | Add-Member -type NoteProperty -Name 'user' -Value $Global:ticketOwner
-    $item | Add-Member -type NoteProperty -Name 'showWithNoOwners' -Value $showWithNoOwners.IsChecked    
+    $item | Add-Member -type NoteProperty -Name 'showWithNoOwners' -Value $showWithNoOwnersR.IsChecked    
     $item | Add-Member -type NoteProperty -Name 'first' -Value $Global:first
     $item | Add-Member -type NoteProperty -Name 'second' -Value $Global:second
     $item | Add-Member -type NoteProperty -Name 'third' -Value $Global:third
@@ -2819,36 +2836,7 @@ function createTicketOnDate () {
 
             if ( ![string]::IsNullOrEmpty($json.createDate) ) {
 
-                #$createDate = Get-Date $json.createDate -ErrorAction SilentlyContinue
-                <#
                 $culture = [System.Globalization.CultureInfo]::GetCultureInfo("en-US")
-                $date = Get-Date $json.createDate  -ErrorAction SilentlyContinue
-                $createDate = $date.ToString("dd MMMM yyyy", $culture)
-
-                $date2 = Get-Date -ErrorAction SilentlyContinue
-                $curentDate = $date2.ToString("dd MMMM yyyy", $culture)
-
-                $limit = $($createDate - $curentDate).days
-                #>
-
-                $culture = [System.Globalization.CultureInfo]::GetCultureInfo("en-US")
-
-                <#
-                 # Before multidate
-
-                $date = [datetime]::ParseExact($json.createDate, "dd MMMM yyyy", $culture)
-                $createDate = $date
-                $currentDate = Get-Date
-
-                $limit = ($createDate - $currentDate).Days
-
-                if ( $limit -ge 0 -or $limit -le 0 ) {
-                
-                    if ( !($json.ID -contains $allIDs) ) { 
-                        Copy-Item -Path $_ -Destination $Global:prio1  
-                    }
-                }
-                #>
 
                 $tempDate = $json.createDate.split(",").trim()
                 $tempDate | ForEach-Object { 
@@ -2868,7 +2856,6 @@ function createTicketOnDate () {
                             if ( !($json.ID -contains $allIDs) ) { 
                             
                                 $json.createDate = $createDate.ToString("yyyy-MM-dd")
-                                #$json | ConvertTo-Json | out-file -FilePath "$Global:prio1\$($json.title).json" -Force  
                                 
                                 if ( $json.prio -eq "Prio 1" ) {
                                     $json | ConvertTo-Json | out-file -FilePath "$Global:prio1\$($json.title).json"
@@ -2903,22 +2890,11 @@ $Global:prio1R.Add_Click({ searchForTickets -show $true })
 $Global:prio2R.Add_Click({ searchForTickets -show $true })
 $Global:prio3R.Add_Click({ searchForTickets -show $true })
 $Global:pauseR.Add_Click({ searchForTickets -show $true })
-$showWithNoOwners.Add_Click({ searchForTickets })
+$showWithNoOwnersR.Add_Click({ searchForTickets })
 
 $Global:noOwnersWasChecked = $false  
-$showAllTicketsR.Add_Click({ 
-    searchForTickets 
-    <#
-    if ( $Global:noOwnersWasChecked -and !$showWithNoOwners.IsChecked ) {
-        $Global:noOwnersWasChecked = $false
-        $showWithNoOwners.IsChecked = $true
-    } else {
-        $Global:noOwnersWasChecked = $showWithNoOwners.IsChecked
-        $showWithNoOwners.IsChecked = $false
-    }
-    #>
-})  
-
+$showAllTicketsR.Add_Click({ searchForTickets })  
+$showWithAndWithNoOwnersR.Add_Click({ searchForTickets })  
 $newTicketB.Add_Click({ newTicket })
 $renameTicketB.Add_Click({ renameTicket })
 $assignticketB.Add_Click({ assignTicketOwner })
