@@ -50,6 +50,7 @@ if ( !$(Test-Path -Path "$Global:Settings\Userprofile.json" -ErrorAction Silentl
     $item | Add-Member -type NoteProperty -Name 'automove' -Value $true
     $item | Add-Member -type NoteProperty -Name 'user' -Value $null
     $item | Add-Member -type NoteProperty -Name 'showWithNoOwners' -Value $false
+
         
     $item | ConvertTo-Json | Out-File -FilePath "$Global:Settings\Userprofile.json"
 }
@@ -336,6 +337,7 @@ function loadAutosaveSettings () {
     $Global:third = $AutoSave.third
     $Global:Path = $AutoSave.ticketPath
     $Global:chooseTicketOwner = $AutoSave.chooseTicketOwner
+    $showWithAndWithNoOwnersR.IsChecked = $AutoSave.showWithAndWithNoOwners
 
     ## Maybe I'll improve this later. A bit of a hack.
     if ( $Global:chooseTicketOwner -eq $null ) {
@@ -2552,7 +2554,7 @@ function autosaveSettings () {
     $item | Add-Member -type NoteProperty -Name 'first' -Value $Global:first
     $item | Add-Member -type NoteProperty -Name 'second' -Value $Global:second
     $item | Add-Member -type NoteProperty -Name 'third' -Value $Global:third
-
+    $item | Add-Member -type NoteProperty -Name 'showWithAndWithNoOwners' -Value $showWithAndWithNoOwnersR.IsChecked
     $item | Add-Member -type NoteProperty -Name 'chooseTicketOwner' -Value $Global:chooseTicketOwner
     
 
