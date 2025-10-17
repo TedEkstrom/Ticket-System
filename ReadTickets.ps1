@@ -2548,7 +2548,7 @@ function autosaveSettings () {
     $item | Add-Member -type NoteProperty -Name 'SolvedR' -Value $SolvedR.IsChecked
     $item | Add-Member -type NoteProperty -Name 'NotSolvedR' -Value $NotSolvedR.IsChecked
     $item | Add-Member -type NoteProperty -Name 'WithOutOwner' -Value $showAllTicketsR.IsChecked
-    $item | Add-Member -type NoteProperty -Name 'automove' -Value $Global:autoMove
+    $item | Add-Member -type NoteProperty -Name 'automove' -Value $Global:autoMove.IsChecked
     $item | Add-Member -type NoteProperty -Name 'user' -Value $Global:ticketOwner
     $item | Add-Member -type NoteProperty -Name 'showWithNoOwners' -Value $showWithNoOwnersR.IsChecked    
     $item | Add-Member -type NoteProperty -Name 'first' -Value $Global:first
@@ -2761,9 +2761,11 @@ $Timer1.Start()
 $Timer2 = New-Object System.Windows.Threading.DispatcherTimer
 $Timer2.Interval = [TimeSpan]::FromSeconds(10)
 
-$Timer2.add_Tick({
+
+function moveTickets () {
     
     # Code from Copilot
+    # Moves tickets from pause when the deadline is reached.
 
     $selectedItem = $tickets.SelectedItem
     $selectedIndex = $tickets.SelectedIndex
@@ -2808,8 +2810,9 @@ $Timer2.add_Tick({
             }
         }
     }
- })
+ }
 
+$Timer2.add_Tick({moveTickets})
 $Timer2.Start()
 
 $Timer3 = New-Object System.Windows.Threading.DispatcherTimer
