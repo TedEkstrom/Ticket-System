@@ -407,7 +407,7 @@ Function showProgressBar ( $show ) {
         $PowerShellCommand = [PowerShell]::Create().AddScript({
         [xml]$xaml = @"
         <Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-            Title="" Height="150" Width="300" WindowStartupLocation="CenterScreen" Topmost="True">
+            Title="Laddar..." Height="150" Width="300" WindowStartupLocation="CenterScreen" Topmost="True">
         <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
             <TextBlock Text="Arbetar..." Margin="0,0,0,10" HorizontalAlignment="Center"/>
             <ProgressBar IsIndeterminate="True" Height="20" Width="200" HorizontalAlignment="Center"/>
@@ -487,7 +487,7 @@ function scanJsonFiles ( $switch, $temp, $json) {
             ticketName = $temp
             Status = $json.status
             Priority = $json.prio
-            ReportedBy = $json.username
+            ReportedBy = $json.name
             Date = $json.date
             AssignedTO = $json.ticketOwner
             DeadLine = $json.deadLine
@@ -995,7 +995,10 @@ $inputXML = @"
     })
 
 
-    $CloseB.Add_Click({ $Window.hide() })
+    $CloseB.Add_Click({ 
+        $Global:comment = $allUpdatesT.Text
+        $Window.hide() 
+    })
 
     [Void]$Window.ShowDialog();
 }
@@ -1010,77 +1013,78 @@ $inputXML = @"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:OpenTicket"
         mc:Ignorable="d"
+        WindowState="Maximized"
         Title="Open ticket" Height="820" Width="800">
+
     <Grid>
-        <Border Background="White" CornerRadius="10" Padding="10" Margin="20">
-            <StackPanel>
-                <TextBlock Name="ticketNameT" Text="[ No name ]" FontSize="20" FontWeight="Bold" Foreground="#2C3E50" />
-                <TextBlock Name="tagT" Text="Tag: Missing..." FontSize="10" Padding="0,10,0,10" />
+        <Border Background="White" CornerRadius="10" Padding="20" Margin="0">
+            <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                <StackPanel>
+                    <TextBlock Name="ticketNameT" Text="[ No name ]" FontSize="20" FontWeight="Bold" Foreground="#2C3E50" />
+                    <TextBlock Name="computerNameT" Text="Computername: Missing..." FontSize="14" Padding="0,10,0,10" />
 
-                <TextBlock Name="priorityT" Text="Priority: Missing..." FontSize="16" Foreground="#F39C12" Padding="0,0,0,0" />
+                    <TextBlock Name="priorityT" Text="Priority: Missing..." FontSize="16" Foreground="#F39C12" Padding="0,0,0,0" />
 
-                <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
-                    <TextBlock Name="visibleT" Text="Visible: Private" FontSize="16"/>
-                    <Button Name="visibleB" Content="Public" Width="60" FontSize="12" 
-                         HorizontalAlignment="Left" Margin="10,0,0,0" Height="20" />
+                    <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+                        <TextBlock Name="visibleT" Text="Visible: Private" FontSize="16"/>
+                        <Button Name="visibleB" Content="Public" Width="60" FontSize="12" 
+                             HorizontalAlignment="Left" Margin="10,0,0,0" Height="20" />
+                    </StackPanel>
+
+                    <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+                        <TextBlock Text="Status:" FontSize="16" Foreground="#27AE60" />
+                        <ComboBox Name="statusCB"  Width="150" Margin="10,0,15,0">
+                            <ComboBoxItem Content="Not set"/>
+                            <ComboBoxItem Content="In progress" IsSelected="True"/>
+                            <ComboBoxItem Content="Awaiting response"/>
+                            <ComboBoxItem Content="Pending"/>
+                            <ComboBoxItem Content="Response"/>
+                            <ComboBoxItem Content="External"/>
+                            <ComboBoxItem Content="Resolved"/>
+                            <ComboBoxItem Content="Reopened"/>
+                            <ComboBoxItem Content="Rejected"/>
+                            <ComboBoxItem Content="Closed without action"/>
+                            <ComboBoxItem Content="Awaiting approval"/>
+                            <ComboBoxItem Content="Planned"/>
+                        </ComboBox>
+                        <TextBox Name="statusT"   Text="Custom text" FontSize="15" Width="150" Margin="0,0,0,0" 
+                         Foreground="Black" AcceptsReturn="True" TextWrapping="Wrap" Visibility="Hidden"
+                         VerticalScrollBarVisibility="Auto"/>
+                    </StackPanel>
+
+                    <StackPanel Orientation="Horizontal" Margin="0,15,0,10">
+                        <TextBlock Name="DeadlineT" Text="Deadline: Not set" FontSize="16" Padding="0,0,0,0" />
+                        <Button Name="deadlineB" Content="Add deadline" Width="100" FontSize="12" 
+                                HorizontalAlignment="Left" Margin="10,0,0,0" Height="20" />
+                        <Button Name="resetDeadlineB" Content="Reset" Width="60" FontSize="12" 
+                                HorizontalAlignment="Left" Margin="5,0,0,0" Height="20" />
+                    </StackPanel>
+
+                    <Label Content="Description"/>
+                    <TextBox Name="descriptionT" Text="Missing a description.."
+                             FontSize="14" Foreground="Black" Margin="10,0,10,0" 
+                             TextWrapping="Wrap" AcceptsReturn="True" Height="100" VerticalScrollBarVisibility="Auto"
+                             IsReadOnly="True" Background="Transparent"/>
+
+                    <Label Name="allPriviusUpdatesL" Content="All privius updates"/>
+
+                    <TextBox Name="allUpdatesT" Text="Missing update..."
+                            FontSize="14" Height="300" Margin="10,0,10,0" Foreground="Black" 
+                            AcceptsReturn="True"  TextWrapping="Wrap"
+                            IsReadOnly="True" VerticalScrollBarVisibility="Auto"/>
+
+                    <Button Name="editB" Content="Edit" Width="60" FontSize="12" 
+                            Height="17" Background="#FFC59200" Foreground="White" Padding="0" 
+                            HorizontalAlignment="Left" Margin="15,5,0,10"  />
+
+                    <StackPanel Orientation="Horizontal" Margin="10">
+                        <Button Name="addCommentB" Content="[ Add comment ]" Width="120" Background="#FF4DA3DC" Foreground="White" Padding="5" />
+                        <Button Name="closeB"  Content="Close and update" Width="120" Background="#3498DB" Foreground="White" Padding="5" Margin="5,0,0,0"/>
+                        <Button Name="solvedB" Content="Solved" Width="120" Background="#2ECC71" Foreground="White" Padding="5" Margin="5,0,0,0"/>
+                        <Button Name="notSolvableB"  Content="Not solvable" Width="120" Background="Darkred" Foreground="White" Padding="5" Margin="5,0,0,0"/>
+                    </StackPanel>
                 </StackPanel>
-                
-                <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
-                    <TextBlock Text="Status:" FontSize="16" Foreground="#27AE60" />
-                    <ComboBox Name="statusCB"  Width="150" Margin="10,0,15,0">
-                        <ComboBoxItem Content="Not set"/>
-                        <ComboBoxItem Content="In progress" IsSelected="True"/>
-                        <ComboBoxItem Content="Awaiting response"/>
-                        <ComboBoxItem Content="Pending"/>
-                        <ComboBoxItem Content="Response"/>
-                        <ComboBoxItem Content="External"/>
-                        <ComboBoxItem Content="Resolved"/>
-                        <ComboBoxItem Content="Reopened"/>
-                        <ComboBoxItem Content="Rejected"/>
-                        <ComboBoxItem Content="Closed without action"/>
-                        <ComboBoxItem Content="Awaiting approval"/>
-                        <ComboBoxItem Content="Planned"/>
-                    </ComboBox>
-                    <TextBox Name="statusT"   Text="Custom text" FontSize="15" Width="150" Margin="0,0,0,0" 
-                     Foreground="Black" AcceptsReturn="True" TextWrapping="Wrap" Visibility="Hidden"
-                     VerticalScrollBarVisibility="Auto"/>
-                </StackPanel>
-
-                <StackPanel Orientation="Horizontal" Margin="0,15,0,10">
-                    <TextBlock Name="DeadlineT" Text="Deadline: Not set" FontSize="16" Padding="0,0,0,0" />
-                    <Button Name="deadlineB" Content="Add deadline" Width="100" FontSize="12" 
-                            HorizontalAlignment="Left" Margin="10,0,0,0" Height="20" />
-                    <Button Name="resetDeadlineB" Content="Reset" Width="60" FontSize="12" 
-                            HorizontalAlignment="Left" Margin="5,0,0,0" Height="20" />
-                </StackPanel>
-                <!-- Gör beskrivningen till en TextBox för mer utrymme och rullning -->
-                <Label Content="Description"/>
-                <TextBox Name="descriptionT" Text="Missing a description.."
-                         FontSize="14" Foreground="Black" Width="705"
-                         TextWrapping="Wrap" AcceptsReturn="True" Height="100" VerticalScrollBarVisibility="Auto"
-                         IsReadOnly="True" Background="Transparent"/>
-
-                <Label Name="allPriviusUpdatesL" Content="All privius updates"/>
-
-                <!-- TextBox för användarinmatning -->
-
-                <TextBox Name="allUpdatesT" FontSize="15" Height="300" Margin="10,0,10,0" 
-                     Text="Missing update..." Foreground="Black" 
-                     AcceptsReturn="True"  TextWrapping="Wrap"
-                     IsReadOnly="True" VerticalScrollBarVisibility="Auto"/>
-
-                <Button Name="editB" Content="Edit" Width="60" FontSize="12" 
-                        Height="17" Background="#FFC59200" Foreground="White" Padding="0" 
-                        HorizontalAlignment="Left" Margin="15,5,0,10"  />
-
-                <!-- Flyttade knapparna längst ner -->
-                <StackPanel Orientation="Horizontal" Margin="10">
-                    <Button Name="addCommentB" Content="[ Add comment ]" Width="120" Background="#FF4DA3DC" Foreground="White" Padding="5" />
-                    <Button Name="closeB"  Content="Close and update" Width="120" Background="#3498DB" Foreground="White" Padding="5" Margin="5,0,0,0"/>
-                    <Button Name="solvedB" Content="Solved" Width="120" Background="#2ECC71" Foreground="White" Padding="5" Margin="5,0,0,0"/>
-                    <Button Name="notSolvableB"  Content="Not solvable" Width="120" Background="Darkred" Foreground="White" Padding="5" Margin="5,0,0,0"/>
-                </StackPanel>
-            </StackPanel>
+            </ScrollViewer>
         </Border>
     </Grid>
 </Window>
@@ -1101,7 +1105,7 @@ $inputXML = @"
         $statusCB = $Window.FindName("statusCB")
         #$updateT = $Window.FindName("updateT")
         $allUpdatesT = $Window.FindName("allUpdatesT")
-        $tagT = $Window.FindName("tagT")
+        $computerNameT = $Window.FindName("computerNameT")
         $editB = $Window.FindName("editB")
         $solvedB = $Window.FindName("solvedB")
         $closeB = $Window.FindName("closeB")
@@ -1151,7 +1155,7 @@ $inputXML = @"
         $statusT.Text = $desiredStatus
     }
    
-    $tagT.Text = "Tag: "+$global:LoadedTicket.tag
+    $computerNameT.Text = "ComputerName: "+$global:LoadedTicket.tag
 
     if ( $loadedticket.prio -eq "Prio 1" ) {
         $priorityT.Foreground.Color = "Darkred"
@@ -1301,21 +1305,21 @@ $inputXML = @"
         $Window.Hide()
     })
 
-    $tagTtemp = $tagT.Text
+    $computerNameTtemp = $computerNameT.Text
 
-    $tagT.Add_MouseEnter({
-        $tagT.Background = [System.Windows.Media.Brushes]::LightGray
-        $tagT.Text = "$($tagT.Text) - Left-mouseclick to copy to Clipboard."
+    $computerNameT.Add_MouseEnter({
+        $computerNameT.Background = [System.Windows.Media.Brushes]::LightGray
+        $computerNameT.Text = "$($computerNameT.Text) - Left-mouseclick to copy to Clipboard."
     })
 
-    $tagT.Add_MouseLeave({
-        $tagT.Background = [System.Windows.Media.Brushes]::Transparent
-        $tagT.Text = $tagTtemp
+    $computerNameT.Add_MouseLeave({
+        $computerNameT.Background = [System.Windows.Media.Brushes]::Transparent
+        $computerNameT.Text = $computerNameTtemp
     })
  
-    $tagT.Add_MouseLeftButtonDown({
+    $computerNameT.Add_MouseLeftButtonDown({
         Set-Clipboard -Value $global:LoadedTicket.Tag
-        $tagT.Text = "$tagTtemp - Kopierad!"
+        $computerNameT.Text = "$computerNameTtemp - Kopierad!"
     })
 
     $statusCB.Add_SelectionChanged({ 
