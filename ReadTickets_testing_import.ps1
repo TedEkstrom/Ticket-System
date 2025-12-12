@@ -996,7 +996,7 @@ $inputXML = @"
 
 
     $CloseB.Add_Click({ 
-        $Global:comment = $allUpdatesT.Text
+        $Global:comment = $global:LoadedTicket.update
         $Window.hide() 
     })
 
