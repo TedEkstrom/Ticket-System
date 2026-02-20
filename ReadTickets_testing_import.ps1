@@ -474,7 +474,7 @@ function scanJsonFiles ( $switch, $temp, $json) {
             ticketName = $temp
             Status = "New"
             Priority = $json.prio
-            ReportedBy = $json.username
+            ReportedBy = $json.Name
             Date = $json.date
             AssignedTO = $json.ticketOwner
             DeadLine = $json.deadLine
@@ -487,7 +487,7 @@ function scanJsonFiles ( $switch, $temp, $json) {
             ticketName = $temp
             Status = $json.status
             Priority = $json.prio
-            ReportedBy = $json.name
+            ReportedBy = $json.Name
             Date = $json.date
             AssignedTO = $json.ticketOwner
             DeadLine = $json.deadLine
@@ -498,7 +498,7 @@ function scanJsonFiles ( $switch, $temp, $json) {
             ticketName = $temp
             Status = $json.status
             Priority = $json.prio
-            ReportedBy = $json.username
+            ReportedBy = $json.Name
             Date = $json.date
             AssignedTO = $json.ticketOwner
             DeadLine = $json.deadLine
@@ -1061,10 +1061,18 @@ $inputXML = @"
                     </StackPanel>
 
                     <Label Content="Description"/>
-                    <TextBox Name="descriptionT" Text="Missing a description.."
-                             FontSize="14" Foreground="Black" Margin="10,0,10,0" 
-                             TextWrapping="Wrap" AcceptsReturn="True" Height="100" VerticalScrollBarVisibility="Auto"
-                             IsReadOnly="True" Background="Transparent"/>
+                    <TextBox Name="descriptionT"
+                         Text="Missing a description.."
+                         FontSize="14"
+                         Foreground="Black"
+                         Margin="10,0,10,0"
+                         TextWrapping="Wrap"
+                         AcceptsReturn="True"
+                         MinHeight="100"
+                         VerticalScrollBarVisibility="Disabled"
+                         IsReadOnly="True"
+                         Background="Transparent"/>
+
 
                     <Label Name="allPriviusUpdatesL" Content="All privius updates"/>
 
@@ -2880,7 +2888,7 @@ function autosaveSettings () {
     $item | Add-Member -type NoteProperty -Name 'SolvedR' -Value $SolvedR.IsChecked
     $item | Add-Member -type NoteProperty -Name 'NotSolvedR' -Value $NotSolvedR.IsChecked
     $item | Add-Member -type NoteProperty -Name 'WithOutOwner' -Value $showAllTicketsR.IsChecked
-    $item | Add-Member -type NoteProperty -Name 'automove' -Value $Global:autoMove.IsChecked
+    $item | Add-Member -type NoteProperty -Name 'automove' -Value $Global:autoMove
     $item | Add-Member -type NoteProperty -Name 'user' -Value $Global:ticketOwner
     $item | Add-Member -type NoteProperty -Name 'showWithNoOwners' -Value $showWithNoOwnersR.IsChecked    
     $item | Add-Member -type NoteProperty -Name 'first' -Value $Global:first
@@ -2888,7 +2896,6 @@ function autosaveSettings () {
     $item | Add-Member -type NoteProperty -Name 'third' -Value $Global:third
     $item | Add-Member -type NoteProperty -Name 'showWithAndWithNoOwners' -Value $showWithAndWithNoOwnersR.IsChecked
     $item | Add-Member -type NoteProperty -Name 'chooseTicketOwner' -Value $Global:chooseTicketOwner
-    
 
     $item | ConvertTo-Json | Out-File -FilePath "$Global:Settings\Userprofile.json"
 }
@@ -3011,6 +3018,8 @@ $inputXML = @"
     $firstTB.Text = $Global:first
     $secondTB.Text = $Global:second
     $thirdTB.text = $Global:third
+
+    
 
     $saveB.Add_Click({
  
